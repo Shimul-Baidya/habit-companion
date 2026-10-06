@@ -31,7 +31,7 @@ data class HabitMetadata(
 data class ArchiveChange(val habitId: Long, val archivedAt: Long)
 
 /** All related writes are atomic; the clock is injected for reproducible date guards. */
-class HabitHistoryRepository(private val database: HabitDatabase, private val clock: Clock) : HabitFormDataSource {
+class HabitHistoryRepository(private val database: HabitDatabase, private val clock: Clock) : HabitFormDataSource, HabitOperations {
     private val habits = database.habitDao()
     private val historyDao = database.historyDao()
     private val completions = database.completionDao()
@@ -136,6 +136,18 @@ class HabitHistoryRepository(private val database: HabitDatabase, private val cl
         requireNotNull(historyDao.record(id)).toHistory()
     }
 
+    override suspend fun correctChecked(id: Long, date: LocalDate, openedOn: LocalDate,
+        expected: HabitSettings, before: CompletionValue?, value: CompletionValue?) = database.withTransaction {
+        val record = requireNotNull(historyDao.record(id)) { "Habit no longer exists" }
+        require(record.habit.archivedAt == null) { "Habit is archived" }
+        val history = record.toHistory()
+        require(date != openedOn || today() == openedOn) { "Date changed; reopen today's entry" }
+        require(history.settingsOn(date) == expected && history.logs.singleOrNull { it.date == date }?.value == before) {
+            "History changed; reopen this date before correcting it"
+        }
+        writeCompletion(id, date, value, requireToday = date == openedOn)
+    }
+
     suspend fun correct(id: Long, date: LocalDate, value: CompletionValue?) = writeCompletion(id, date, value, requireToday = false)
     suspend fun logToday(id: Long, date: LocalDate, value: CompletionValue?) = writeCompletion(id, date, value, requireToday = true)
 
@@ -160,7 +172,7 @@ class HabitHistoryRepository(private val database: HabitDatabase, private val cl
         }
     }
 
-    suspend fun archive(id: Long): ArchiveChange = database.withTransaction {
+    override suspend fun archive(id: Long): ArchiveChange = database.withTransaction {
         val record = requireNotNull(historyDao.record(id))
         require(record.habit.archivedAt == null)
         val at = clock.instant()
@@ -168,12 +180,12 @@ class HabitHistoryRepository(private val database: HabitDatabase, private val cl
         ArchiveChange(id, at.toEpochMilli())
     }
 
-    suspend fun undoArchive(change: ArchiveChange): Boolean = database.withTransaction {
+    override suspend fun undoArchive(change: ArchiveChange): Boolean = database.withTransaction {
         if (clock.millis() - change.archivedAt !in 0L until 5_000L) return@withTransaction false
         val habit = historyDao.record(change.habitId)?.habit ?: return@withTransaction false
         if (habit.archivedAt != change.archivedAt) return@withTransaction false
         habits.update(habit.copy(archivedAt = null, archivedEpochDay = null))
         true
     }
-    suspend fun delete(id: Long) = database.withTransaction { historyDao.delete(id) }
+    override suspend fun delete(id: Long) = database.withTransaction { historyDao.delete(id) }
 }

@@ -50,6 +50,7 @@ fun TodayHome(
     onOpenHabit: (HabitStatus) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    onManageHabit: (Long) -> Unit = {},
 ) {
     LazyColumn(
         contentPadding = PaddingValues(),
@@ -72,6 +73,7 @@ fun TodayHome(
                 status = status.copy(canLogToday = status.canLogToday && state.canWrite && status.habit.id !in state.writingIds),
                 onToggle = { onToggle(status) },
                 onOpen = { onOpenHabit(status) },
+                onManage = { onManageHabit(status.habit.id) },
                 modifier = Modifier.padding(horizontal = Spacing.gutter),
             )
         }
@@ -86,6 +88,7 @@ fun TodayHome(
                     status = status.copy(canLogToday = status.canLogToday && state.canWrite && status.habit.id !in state.writingIds),
                     onToggle = { onToggle(status) },
                     onOpen = { onOpenHabit(status) },
+                onManage = { onManageHabit(status.habit.id) },
                     modifier = Modifier.padding(horizontal = Spacing.gutter),
                 )
             }

@@ -5,6 +5,12 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.habit.ui.management.*
+import com.example.habit.ui.screens.detail.HabitDetailScreen
+import com.example.habit.ui.components.LocalHabitSharedScope
+import com.example.habit.ui.components.LocalHabitAnimatedScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -24,10 +30,12 @@ import com.example.habit.ui.theme.Motion
 
 @Composable
 fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
+    val management: HabitManagementViewModel = viewModel(factory = HabitManagementViewModel.Factory)
+    Box {
     HabitNavigationGraph(navController, modifier,
         splash = { onboarding, home -> SplashScreen(onboarding, home) },
         onboarding = { finished -> OnboardingScreen(finished) },
-        home = { add, coach, detail, tab -> HomeScreen(add, coach, detail, tab) },
+        home = { add, coach, detail, tab -> HomeScreen(add, coach, detail, tab, onManageHabit = management::open) },
         form = { entry, back ->
             val planningResult by entry.savedStateHandle.getStateFlow<ArrayList<String>?>(PlanningDraftContract.RESULT_KEY, null).collectAsStateWithLifecycle()
             NewHabitScreen(planningResult = planningResult,
@@ -35,8 +43,12 @@ fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController
                 onBack = back, onCreated = back)
         },
         root = { tab, select -> if (tab == HomeTab.COACH) CoachRoot(select) else NotBuiltYetScreen(tab, select) },
-        detail = { id, back -> PendingHabitDetail(id, back) },
+        detail = { _, back -> HabitDetailScreen(back, management::open) },
     )
+    HabitManagementHost(management, onEdit = { navController.navigate(Routes.editHabit(it)) { launchSingleTop = true } },
+        onRemoved = { id -> if (navController.currentBackStackEntry?.destination?.route == Routes.HABIT_DETAIL &&
+            navController.currentBackStackEntry?.arguments?.getLong(Routes.ARG_HABIT_ID) == id) navController.popBackStack() })
+    }
 }
 
 /** Screen ports let isolated device tests exercise the production graph and Back contracts. */
@@ -69,11 +81,13 @@ internal fun HabitNavigationGraph(
     fun enterMain(dbError: Boolean, launch: String) {
         navController.navigate(Routes.home(dbError)) { popUpTo(launch) { inclusive = true }; launchSingleTop = true }
     }
+    SharedTransitionLayout {
+    CompositionLocalProvider(LocalHabitSharedScope provides this) {
     NavHost(navController, startDestination = Routes.SPLASH, modifier = modifier,
         enterTransition = {
             when {
                 targetState.destination.route == Routes.NEW_HABIT -> slideInHorizontally(tween(250)) { it } + fadeIn(tween(250))
-                targetState.destination.route == Routes.HABIT_DETAIL -> scaleIn(tween(300), initialScale = 0.96f) + fadeIn(tween(300))
+                targetState.destination.route == Routes.HABIT_DETAIL -> fadeIn(tween(300))
                 initialState.destination.route in setOf(Routes.SPLASH, Routes.ONBOARDING) -> fadeIn(tween(200))
                 else -> fadeIn(tween(Motion.NAV_FADE))
             }
@@ -83,7 +97,7 @@ internal fun HabitNavigationGraph(
         popExitTransition = {
             when (initialState.destination.route) {
                 Routes.NEW_HABIT -> slideOutHorizontally(tween(250)) { it } + fadeOut(tween(250))
-                Routes.HABIT_DETAIL -> scaleOut(tween(300), targetScale = 0.96f) + fadeOut(tween(300))
+                Routes.HABIT_DETAIL -> fadeOut(tween(300))
                 else -> fadeOut(tween(Motion.NAV_FADE))
             }
         }) {
@@ -93,14 +107,20 @@ internal fun HabitNavigationGraph(
         composable(Routes.ONBOARDING) { onboarding { enterMain(false, Routes.ONBOARDING) } }
         navigation(startDestination = Routes.HOME, route = Routes.MAIN) {
             composable(Routes.HOME, arguments = listOf(navArgument(Routes.ARG_DB_ERROR) { type = NavType.BoolType; defaultValue = false })) {
+                CompositionLocalProvider(LocalHabitAnimatedScope provides this) {
                 home({ open(Routes.newHabit()) }, { open(Routes.newHabit(planning = true)) }, { open(Routes.detail(it)) }, ::switchTab)
+                }
             }
             composable(Routes.NEW_HABIT, arguments = listOf(
                 navArgument(NewHabitViewModel.ARG_HABIT_ID) { type = NavType.LongType; defaultValue = 0L },
                 navArgument(NewHabitViewModel.ARG_PLANNING) { type = NavType.BoolType; defaultValue = false },
             )) { entry -> form(entry) { navController.popBackStack() } }
             composable(Routes.HABIT_DETAIL, arguments = listOf(navArgument(Routes.ARG_HABIT_ID) { type = NavType.LongType })) { entry ->
-                detail(requireNotNull(entry.arguments).getLong(Routes.ARG_HABIT_ID)) { navController.popBackStack() }
+                CompositionLocalProvider(LocalHabitAnimatedScope provides this) {
+                detail(requireNotNull(entry.arguments).getLong(Routes.ARG_HABIT_ID)) {
+                    if (navController.currentBackStackEntry == entry) navController.popBackStack()
+                }
+                }
             }
             listOf(Routes.PROGRESS to HomeTab.PROGRESS, Routes.COACH to HomeTab.COACH, Routes.PROFILE to HomeTab.PROFILE).forEach { (route, tab) ->
                 composable(route) {
@@ -109,5 +129,7 @@ internal fun HabitNavigationGraph(
                 }
             }
         }
+    }
+    }
     }
 }

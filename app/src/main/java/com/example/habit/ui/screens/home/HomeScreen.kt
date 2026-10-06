@@ -54,6 +54,7 @@ fun HomeScreen(
     onOpenHabit: (Long) -> Unit,
     onSelectTab: (HomeTab) -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
+    onManageHabit: (Long) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -66,6 +67,7 @@ fun HomeScreen(
         onOpenCoach = onOpenCoach,
         onOpenHabit = { onOpenHabit(it.habit.id) },
         onSelectTab = onSelectTab,
+        onManageHabit = onManageHabit,
         onAmount = viewModel::changeAmount,
         onSaveAmount = viewModel::saveQuantity,
         onDismissAmount = viewModel::dismissQuantity,
@@ -85,6 +87,7 @@ internal fun HomeContent(
     onAmount: (String) -> Unit = {},
     onSaveAmount: (Boolean) -> Unit = {},
     onDismissAmount: () -> Unit = {},
+    onManageHabit: (Long) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -173,6 +176,7 @@ internal fun HomeContent(
             } else {
                 TodayHome(
                     state = state,
+                    onManageHabit = onManageHabit,
                     onToggle = onToggle,
                     onOpenHabit = onOpenHabit,
                     contentPadding = innerPadding,

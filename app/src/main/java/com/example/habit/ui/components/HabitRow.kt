@@ -1,7 +1,7 @@
 package com.example.habit.ui.components
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -46,6 +46,7 @@ fun HabitRow(
     onToggle: () -> Unit,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    onManage: () -> Unit = {},
 ) {
     Card(
         shape = Radius.card,
@@ -67,7 +68,7 @@ fun HabitRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                modifier = Modifier.weight(1f).heightIn(min = Sizes.touchTarget).clickable(onClick = onOpen)
+                modifier = Modifier.weight(1f).heightIn(min = Sizes.touchTarget).combinedClickable(onClick = onOpen, onLongClickLabel = "Manage habit", onLongClick = onManage)
                     .padding(vertical = Spacing.sm),
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp).clip(Radius.md)
@@ -81,6 +82,7 @@ fun HabitRow(
                 ) {
                     Text(
                         text = status.habit.name,
+                        modifier = Modifier.habitNameTransition(status.habit.id),
                         style = HabitTheme.type.title,
                         color = HabitTheme.colors.onSurface,
                     )
