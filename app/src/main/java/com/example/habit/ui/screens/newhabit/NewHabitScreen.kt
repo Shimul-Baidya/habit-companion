@@ -40,6 +40,9 @@ import com.example.habit.R
 import com.example.habit.ui.components.*
 import com.example.habit.ui.theme.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import com.example.habit.coach.CoachApplyReceipt
+import com.example.habit.coach.CoachUndoResult
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
@@ -55,6 +58,17 @@ fun NewHabitScreen(
     viewModel: NewHabitViewModel = viewModel(factory = NewHabitViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val savedActionId by viewModel.coachActionId.collectAsStateWithLifecycle()
+    val actionId = savedActionId?.takeIf { it.isNotBlank() }
+    var receipt by remember { mutableStateOf<CoachApplyReceipt?>(null) }
+    var actionNow by remember { mutableLongStateOf(viewModel.coachNow()) }
+    LaunchedEffect(actionId, state.savedHabitId) {
+        while (actionId != null && state.savedHabitId == null) {
+            receipt = viewModel.coachReceipt(actionId); actionNow = viewModel.coachNow()
+            delay(250)
+        }
+        if (state.savedHabitId != null) receipt = null
+    }
     val snackbars = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val notConnected = stringResource(R.string.form_coach_not_connected)
@@ -80,7 +94,16 @@ fun NewHabitScreen(
         }
     }
     HabitFormContent(state, snackbars, ::back, viewModel::change, viewModel::toggleDay,
-        { viewModel.save() }, ::coach, viewModel::retryLoad, viewModel::requestReload)
+        { viewModel.save() }, ::coach, viewModel::retryLoad, viewModel::requestReload,
+        receipt?.takeIf { it.canUndo(actionNow) && state.savedHabitId == null }, {
+            val result = receipt?.let { viewModel.undoCoach(it.id) }
+            receipt = actionId?.let(viewModel::coachReceipt)
+            scope.launchSnackbar(snackbars, when (result) {
+                CoachUndoResult.UNDONE, CoachUndoResult.ALREADY_UNDONE -> "Draft change undone."
+                CoachUndoResult.CONFLICT -> "A later draft edit prevents Undo. Your later change is kept."
+                else -> "This draft change is no longer available to undo."
+            })
+        })
     if (state.confirmDiscard) FormConfirmation(R.string.form_discard_title, R.string.form_discard_body,
         R.string.form_discard, onDismiss = viewModel::dismissDiscard, onConfirm = onBack)
     if (state.confirmDuplicate) FormConfirmation(R.string.form_duplicate_title, R.string.form_duplicate_body,
@@ -105,13 +128,20 @@ internal fun HabitFormContent(
     onCoach: () -> Unit,
     onRetry: () -> Unit,
     onReload: () -> Unit,
+    coachReceipt: CoachApplyReceipt? = null,
+    onCoachUndo: () -> Unit = {},
 ) {
     val draft = state.draft
     val appBarHeight = maxOf(Sizes.appBarHeight, with(LocalDensity.current) { HabitTheme.type.headline.lineHeight.toDp() } + Spacing.lg)
     val enabled = !state.saving && state.savedHabitId == null && (!state.editing || (!state.loading && state.loadError == null))
     Scaffold(
         containerColor = HabitTheme.colors.surface,
-        snackbarHost = { SnackbarHost(snackbars) },
+        snackbarHost = {
+            if (coachReceipt != null) Snackbar(action = { TextButton(onClick = onCoachUndo, enabled = !state.saving) { Text("Undo", color = HabitTheme.colors.onPrimaryContainer) } },
+                shape = Radius.card, containerColor = HabitTheme.colors.primaryContainer, contentColor = HabitTheme.colors.onPrimaryContainer,
+                modifier = Modifier.padding(16.dp)) { Text(coachReceipt.confirmation) }
+            else SnackbarHost(snackbars)
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (state.editing) R.string.form_edit_title else R.string.new_habit_title),

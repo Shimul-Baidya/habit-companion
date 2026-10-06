@@ -23,6 +23,7 @@ class CoachActionRepository(private val database: HabitDatabase, private val his
     private val dao = database.coachDao()
     private val facts = database.historyDao()
     private suspend fun <T> transaction(block: suspend () -> T): T = gate.access { database.withTransaction { block() } }
+    suspend fun exchange(id: Long, exchangeId: String) = dao.cacheById(exchangeId)?.takeIf { it.habitId == id }
     fun messages(id: Long) = dao.messages(id)
     fun cache(id: Long) = dao.latestCache(id)
     fun actions(id: Long) = dao.actions(id)

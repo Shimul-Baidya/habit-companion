@@ -227,7 +227,7 @@ class InsightWorkflowUiTest {
                     root = { tab, select -> when (tab) {
                         HomeTab.PROGRESS -> ProgressScreen({ nav.navigate(Routes.detail(it)) }, select, progress)
                         HomeTab.PROFILE -> ProfileScreen(select, profile, actions)
-                        HomeTab.COACH -> CoachRoot(select, remember { CoachAvailabilityViewModel(settings.coachEnabled).also { store.put("coach", it) } })
+                        HomeTab.COACH -> CoachRoot(select, remember { CoachSelectionViewModel(flowOf(emptyList()), settings.coachEnabled, SavedStateHandle()).also { store.put("coach", it) } })
                         else -> Unit
                     } }, detail = { habitId, back ->
                         val detail = remember(habitId) { HabitDetailViewModel(habitId, source, history, settings.configuration, Dates(today), SavedStateHandle()).also { store.put("detail-$habitId", it) } }

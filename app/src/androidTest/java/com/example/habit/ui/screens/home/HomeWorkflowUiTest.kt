@@ -113,14 +113,14 @@ class HomeWorkflowUiTest {
     }
     @Test fun coachRootExplainsDisabledStateAndRespondsWhileOpen() {
         val enabled = MutableStateFlow(false)
-        lateinit var availability: com.example.habit.ui.navigation.CoachAvailabilityViewModel
-        compose.runOnIdle { availability = com.example.habit.ui.navigation.CoachAvailabilityViewModel(enabled); store.put("coach", availability) }
+        lateinit var availability: com.example.habit.ui.navigation.CoachSelectionViewModel
+        compose.runOnIdle { availability = com.example.habit.ui.navigation.CoachSelectionViewModel(history.records, enabled, SavedStateHandle()); store.put("coach", availability) }
         compose.setContent { HabitTheme { com.example.habit.ui.navigation.CoachRoot({}, availability) } }
-        compose.onNodeWithText("Coach is disabled").assertIsDisplayed()
+        compose.onNodeWithText("Enable Coach suggestions in Profile", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Enable Coach suggestions in Profile", substring = true).assertIsDisplayed()
         enabled.value = true
-        compose.waitUntil(5000) { availability.enabled.value }
-        compose.onNodeWithText("Coach is disabled").assertDoesNotExist()
+        compose.waitUntil(5000) { availability.state.value.enabled }
+        compose.onNodeWithText("Enable Coach suggestions in Profile", substring = true).assertDoesNotExist()
     }
 
     @Test fun quantityDialogLargeTextWithKeyboardKeepsInputAndSaveAccessible() = runBlocking {

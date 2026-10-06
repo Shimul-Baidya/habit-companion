@@ -44,7 +44,7 @@ class NewHabitViewModel(
     private val forms: HabitFormDataSource,
     private val saved: SavedStateHandle,
     coachEnabled: Flow<Boolean>,
-    clock: java.time.Clock = DeviceClock(),
+    private val clock: java.time.Clock = DeviceClock(),
 ) : ViewModel() {
     private val id = saved.get<Long>(ARG_HABIT_ID)?.takeIf { it > 0 }
     private val token = saved.get<String>(TOKEN) ?: UUID.randomUUID().toString().also { saved[TOKEN] = it }
@@ -61,15 +61,17 @@ class NewHabitViewModel(
         coachActions.beginInteraction(draftToken, exchangeId, request)
         return true
     }
+    val coachActionId = saved.getStateFlow<String?>("coach.latestAction", "")
     fun applyCoach(draftToken: String, exchangeId: String, index: Int, request: CoachRequest,
         response: ValidatedCoachResponse, catalog: StrategyCatalog): CoachApplyReceipt? {
         if (id != null || !state.value.coachEnabled || state.value.loading || state.value.loadError != null || state.value.saving || state.value.savedHabitId != null) return null
-        return coachActions.apply(draftToken, exchangeId, index, request, response, catalog)
+        return coachActions.apply(draftToken, exchangeId, index, request, response, catalog).also { saved["coach.latestAction"] = it.id }
     }
     fun undoCoach(actionId: String): CoachUndoResult {
         if (id != null || state.value.loading || state.value.loadError != null || state.value.saving || state.value.savedHabitId != null) return CoachUndoResult.UNAVAILABLE
         return coachActions.undo(actionId)
     }
+    fun coachNow() = clock.millis()
     fun coachReceipt(actionId: String) = coachActions.receipt(actionId)
 
     init {

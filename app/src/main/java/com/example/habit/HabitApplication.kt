@@ -29,6 +29,7 @@ class AppContainer(context: Context) {
     val strategies by lazy { StrategyRepository { context.applicationContext.assets.open("coach_cards.json").use {
         val bytes = it.readBytes(); require(bytes.size <= 262_144); bytes
     } } }
+    val coachConnection by lazy { com.example.habit.coach.CoachConnection(context.applicationContext) }
     val coachService: CoachService by lazy { UnconfiguredCoachService() }
     private val gate = DataGate()
     private val database: HabitDatabase by lazy { HabitDatabase.build(context) }

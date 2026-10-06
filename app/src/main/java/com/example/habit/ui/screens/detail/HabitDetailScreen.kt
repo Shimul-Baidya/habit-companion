@@ -36,11 +36,11 @@ import java.util.Locale
 
 @Composable
 fun HabitDetailScreen(onBack: () -> Unit, onManage: (Long) -> Unit,
-    viewModel: HabitDetailViewModel = viewModel(factory = HabitDetailViewModel.Factory)) {
+    viewModel: HabitDetailViewModel = viewModel(factory = HabitDetailViewModel.Factory), onOpenCoach: (() -> Unit)? = null) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.missing, state.value?.record?.habit?.archivedAt) { if (state.missing || state.value?.record?.habit?.archivedAt != null) onBack() }
     HabitDetailContent(state, onBack, { state.value?.record?.habit?.id?.let(onManage) },
-        viewModel::moveMonth, viewModel::openDate, viewModel::coach, viewModel::retry)
+        viewModel::moveMonth, viewModel::openDate, { if (state.coachEnabled && !state.readError && onOpenCoach != null) onOpenCoach() else viewModel.coach() }, viewModel::retry)
     state.entry?.let { CorrectionDialog(it, state.canWrite, viewModel::changeInput, viewModel::saveEntry, viewModel::dismissEntry, viewModel::retry) }
     state.notice?.let { notice -> AlertDialog(onDismissRequest = viewModel::clearNotice,
         title = { Text("Coach") }, text = { Text(notice) }, confirmButton = { TextButton(onClick = viewModel::clearNotice) { Text("OK") } }) }

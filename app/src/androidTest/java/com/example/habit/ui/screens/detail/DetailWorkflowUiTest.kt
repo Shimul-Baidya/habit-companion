@@ -76,7 +76,16 @@ class DetailWorkflowUiTest {
         }
         compose.waitUntil(5000) { !detail.state.value.loading && manager.state.value.readable }
     }
-    private fun back() { androidx.test.espresso.Espresso.pressBack() }
+    private fun back() {
+        compose.waitForIdle()
+        compose.waitUntil(5000) {
+            android.view.inspector.WindowInspector.getGlobalWindowViews().any {
+                it !== compose.activity.window.decorView && it.hasWindowFocus()
+            }
+        }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        compose.waitForIdle()
+    }
     private fun date(day: LocalDate) = compose.onNodeWithTag("date-$day")
     private fun bringDate(day: LocalDate) {
         val value = detail.state.value.value!!.evaluation

@@ -33,6 +33,9 @@ object Routes {
     /** SCR-12 / SCR-13, SCR-09, SCR-15 — nav roots, not built in this phase. */
     const val PROGRESS = "progress"
     const val COACH = "coach"
+    const val COACH_HABIT = "coach/{habitId}"
+    const val COACH_PLANNING = "coach-planning"
+    fun coach(id: Long): String { require(id > 0); return "coach/$id" }
     const val PROFILE = "profile"
 
     /**

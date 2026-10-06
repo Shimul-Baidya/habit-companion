@@ -105,6 +105,54 @@ object CoachJson {
             } })).toString()
     }
 
+    /** Rehydrate only our whitelisted local context; never reinterpret a cache with today's history. */
+    fun storedRequest(text: String, digest: String, catalog: StrategyCatalog): CoachRequest? = runCatching {
+        require(digest == catalog.sha256)
+        val root = parse(text, 65_536).obj("contractVersion", "mode", "context", "question", "strategies")
+        require(root["contractVersion"].integer() == 1)
+        fun tracking(value: Any?): TrackingMode {
+            require(value is Map<*, *>)
+            return when (value["mode"].text()) {
+                "BINARY" -> { value.obj("mode"); TrackingMode.Binary }
+                "QUANTITY" -> value.obj("mode", "target", "unit").let {
+                    TrackingMode.Quantity(CoachLimits.amount(it["target"].text()), CoachLimits.text(it["unit"].text(), 40))
+                }
+                else -> error("Unknown mode")
+            }
+        }
+        val context = when (root["mode"].text()) {
+            "PLANNING" -> root["context"].obj("draftName", "schedule", "tracking", "activeHabitCount").let {
+                val count = it["activeHabitCount"].integer(); require(count >= 0)
+                CoachContext.Planning(CoachLimits.text(it["draftName"].text(), 80, true), schedule(it["schedule"]), tracking(it["tracking"]), count)
+            }
+            "EXISTING" -> root["context"].obj("windowDays", "observedDays", "schedule", "tracking", "metricUnit",
+                "completed", "missed", "pending", "partialQuantityDays", "recentSettledOutcomes", "attention").let {
+                require(it["windowDays"].integer() == 30 && it["metricUnit"].text() == "required_occurrences")
+                val days = it["observedDays"].integer(); require(days in 1..30)
+                val done = it["completed"].integer(); val missed = it["missed"].integer(); val pending = it["pending"].integer()
+                val partial = it["partialQuantityDays"].integer()
+                require(done in 0..42 && missed in 0..42 && pending in 0..42 && partial in 0..days)
+                require(done + missed + pending in 0..42)
+                val recent = it["recentSettledOutcomes"].list().map { o -> o.enum<OccurrenceOutcome>() }
+                require(recent.size <= 7 && recent.none { o -> o == OccurrenceOutcome.PENDING })
+                CoachContext.Existing(MeasuredSummary(schedule(it["schedule"]), tracking(it["tracking"]), days,
+                    done, missed, pending, partial, recent, it["attention"].enum<HabitAttention>()))
+            }
+            else -> error("Unknown context")
+        }
+        val cards = root["strategies"].list().map { value ->
+            val c = value.obj("id", "title", "principle", "action", "use_when", "tags", "source", "applicability")
+            val card = StrategyCard(c["id"].text(), c["title"].text(), c["principle"].text(), c["action"].text(),
+                c["use_when"].text(), c["tags"].list().map { it.text() }, c["source"].text())
+            require(catalog.byId[card.id] == card)
+            AdmittedStrategy(card, c["applicability"].enum<Applicability>())
+        }
+        require(cards.size == 3 && cards.map { it.card.id }.distinct().size == 3)
+        val question = CoachLimits.text(root["question"].text(), CoachLimits.QUESTION, true)
+        require((StrategyRetriever.retrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
+        CoachRequest(context, question, cards, digest)
+    }.getOrNull()
+
     fun response(text: String, request: CoachRequest, catalog: StrategyCatalog): ResponseResult = try {
         val root = parse(text, CoachLimits.RESPONSE_BYTES).obj("reading", "suggestions")
         val reading = root["reading"].obj("facts", "possibleBarrier")

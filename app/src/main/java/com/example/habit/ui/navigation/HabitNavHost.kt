@@ -29,6 +29,8 @@ import com.example.habit.ui.screens.progress.ProgressScreen
 import com.example.habit.ui.screens.profile.ProfileScreen
 import com.example.habit.ui.screens.splash.SplashScreen
 import com.example.habit.ui.theme.Motion
+import com.example.habit.ui.screens.coach.*
+import com.example.habit.ui.screens.newhabit.FormCoachEntry
 
 @Composable
 fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
@@ -40,7 +42,12 @@ fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController
         home = { add, coach, detail, tab -> HomeScreen(add, coach, detail, tab, onManageHabit = management::open) },
         form = { entry, back ->
             val planningResult by entry.savedStateHandle.getStateFlow<ArrayList<String>?>(PlanningDraftContract.RESULT_KEY, null).collectAsStateWithLifecycle()
-            NewHabitScreen(planningResult = planningResult,
+            val formModel: NewHabitViewModel = viewModel(viewModelStoreOwner = entry, factory = NewHabitViewModel.Factory)
+            NewHabitScreen(viewModel = formModel, planningResult = planningResult,
+                onOpenCoach = { context -> navController.navigate(when (context) {
+                    is FormCoachEntry.Planning -> Routes.COACH_PLANNING
+                    is FormCoachEntry.Existing -> Routes.coach(context.habitId)
+                }) { launchSingleTop = true } },
                 onPlanningResultConsumed = { entry.savedStateHandle[PlanningDraftContract.RESULT_KEY] = null },
                 onBack = back, onCreated = back)
         },
@@ -50,7 +57,15 @@ fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController
             HomeTab.COACH -> CoachRoot(select)
             HomeTab.HOME -> Unit
         } },
-        detail = { _, back -> HabitDetailScreen(back, management::open) },
+        detail = { id, back -> HabitDetailScreen(back, management::open,
+            onOpenCoach = { navController.navigate(Routes.coach(id)) { launchSingleTop = true } }) },
+        coach = { entry, back ->
+            val id = entry.arguments?.getLong(Routes.ARG_HABIT_ID)?.takeIf { it > 0 }
+            val owner = if (entry.destination.route == Routes.COACH_PLANNING) remember(entry) { navController.getBackStackEntry(Routes.NEW_HABIT) } else null
+            val formModel: NewHabitViewModel? = owner?.let { viewModel(viewModelStoreOwner = it, factory = NewHabitViewModel.Factory) }
+            val coachModel: CoachViewModel = viewModel(viewModelStoreOwner = entry, factory = CoachViewModel.factory(id, formModel))
+            CoachScreen(coachModel, back)
+        },
     )
     HabitManagementHost(management, onEdit = { navController.navigate(Routes.editHabit(it)) { launchSingleTop = true } },
         onRemoved = { id -> if (navController.currentBackStackEntry?.destination?.route == Routes.HABIT_DETAIL &&
@@ -69,6 +84,7 @@ internal fun HabitNavigationGraph(
     form: @Composable (NavBackStackEntry, () -> Unit) -> Unit,
     root: @Composable (HomeTab, (HomeTab) -> Unit) -> Unit,
     detail: @Composable (Long, () -> Unit) -> Unit,
+    coach: @Composable (NavBackStackEntry, () -> Unit) -> Unit = { _, _ -> },
 ) {
     fun switchTab(tab: HomeTab) {
         val route = when (tab) {
@@ -93,6 +109,7 @@ internal fun HabitNavigationGraph(
     NavHost(navController, startDestination = Routes.SPLASH, modifier = modifier,
         enterTransition = {
             when {
+                targetState.destination.route in setOf(Routes.COACH_HABIT, Routes.COACH_PLANNING) -> slideInVertically(tween(300)) { it } + fadeIn(tween(300))
                 targetState.destination.route == Routes.NEW_HABIT -> slideInHorizontally(tween(250)) { it } + fadeIn(tween(250))
                 targetState.destination.route == Routes.HABIT_DETAIL -> fadeIn(tween(300))
                 initialState.destination.route in setOf(Routes.SPLASH, Routes.ONBOARDING) -> fadeIn(tween(200))
@@ -103,6 +120,7 @@ internal fun HabitNavigationGraph(
         }, popEnterTransition = { fadeIn(tween(if (initialState.destination.route == Routes.HABIT_DETAIL) 300 else 250)) },
         popExitTransition = {
             when (initialState.destination.route) {
+                Routes.COACH_HABIT, Routes.COACH_PLANNING -> slideOutVertically(tween(300)) { it } + fadeOut(tween(300))
                 Routes.NEW_HABIT -> slideOutHorizontally(tween(250)) { it } + fadeOut(tween(250))
                 Routes.HABIT_DETAIL -> fadeOut(tween(300))
                 else -> fadeOut(tween(Motion.NAV_FADE))
@@ -128,6 +146,12 @@ internal fun HabitNavigationGraph(
                     if (navController.currentBackStackEntry == entry) navController.popBackStack()
                 }
                 }
+            }
+            composable(Routes.COACH_HABIT, arguments = listOf(navArgument(Routes.ARG_HABIT_ID) { type = NavType.LongType })) { entry ->
+                coach(entry) { if (navController.currentBackStackEntry == entry) navController.popBackStack() }
+            }
+            composable(Routes.COACH_PLANNING) { entry ->
+                coach(entry) { if (navController.currentBackStackEntry == entry) navController.popBackStack() }
             }
             listOf(Routes.PROGRESS to HomeTab.PROGRESS, Routes.COACH to HomeTab.COACH, Routes.PROFILE to HomeTab.PROFILE).forEach { (route, tab) ->
                 composable(route) {
