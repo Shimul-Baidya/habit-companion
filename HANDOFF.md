@@ -1,6 +1,6 @@
 # Habit Companion implementation handoff
 
-Updated 6 October 2026 after completed chunk 08 implementation and focused verification. Workspace: `/home/shimul/AndroidStudioProjects/Habit`.
+Updated 7 October 2026 after completed chunk 09 implementation and focused verification. Workspace: `/home/shimul/AndroidStudioProjects/Habit`.
 
 ## Start here
 
@@ -9,7 +9,7 @@ Updated 6 October 2026 after completed chunk 08 implementation and focused verif
 3. Inspect current code and `git status --short`; the files, not this handoff alone, establish the current implementation.
 4. Read relevant supplied screen/flow specifications and mockups before UI changes. `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` maps sources; old proposals yield to the approved owner decisions.
 
-**Chunks 01–08 are complete. Chunk 08 passed its focused verification; broader platform checks are recorded below. Chunk 09 awaits owner approval.** Do not automatically implement all remaining chunks. Complete one authorised chunk, record verification, provide a one-line commit message and ask permission for the next. The owner stages/commits/pushes. Do not perform Git mutations or disturb pre-existing changes/staging. If command execution requires permission, give its purpose and exact command.
+**Chunks 01–09 are complete. Chunk 09 passed its contract/runtime checks and relevant form/privacy regressions. Chunk 10 awaits owner approval.** Do not automatically implement all remaining chunks. Complete one authorised chunk, record verification, provide a one-line commit message and ask permission for the next. The owner stages/commits/pushes. Do not perform Git mutations or disturb pre-existing changes/staging. If command execution requires permission, give its purpose and exact command.
 
 ## What exists
 
@@ -20,6 +20,16 @@ Updated 6 October 2026 after completed chunk 08 implementation and focused verif
 - Branding/backup: public name Habit Companion, local-only Room/DataStore, backup disabled and storage domains excluded by legacy/modern backup/extraction XML. No network Coach yet. Actual OEM backup/restore transports have not been exercised.
 
 Paths above are relative to `app/src/main/java/com/example/habit/` unless stated otherwise.
+
+## Chunk 09 integration details
+
+- `coach/StrategyCatalog.kt`, `StrategyRetriever.kt`: the generated Gradle asset task packages the exact supplied `resources/coach_cards.json`; there is no hand-maintained second library or new dependency. Strict loading validates the original seven fields/unique IDs/attribution, preserves all 60 cards and records SHA-256 provenance. Missing/corrupt assets are unavailable. Stable ranking uses measured/planning tags and question matches to tags/`use_when`, with ID tie-breaking. Each match is a conditional option; fewer than three relevant cards returns insufficient context. See the explicit weights/context rules in `DOMAIN_BEHAVIOR.md`.
+- `coach/CoachContracts.kt`: separate planning/existing builders accept no local navigation token/Room ID. Existing input is one pure `HabitHistory` and explicit date; the whitelist outputs a 30-day measured summary with required-occurrence weighting, partial quantities under dated targets, up to seven window outcomes and actual attention. Planning allows unnamed draft/name/schedule/aggregate count plus mode and quantity target/unit strictly needed for compatible actions. Appearance/cues/plans/draft tokens stay local. Questions are bounded; invalid input fails without changing the form. The saved form/result envelope is untouched.
+- `coach/CoachJson.kt`: Android's strict `JsonReader` rejects unknown/missing/duplicate fields, type coercion, malformed enums, trailing/comments, excessive depth/size and unsupported actions. Exactly three distinct response IDs must be supplied/admitted; catalog provenance and relevant action tags must match. Reading is one or two true measured fact codes plus a nullable closed, conditional barrier enum, rendered with short local copy; arbitrary causal reading prose cannot assert emotions/life events. Suggestion titles/advice remain recommendations, not measured facts, and later UI must preserve that distinction and actual source tags.
+- Closed action types: advice-only, same-unit positive quantity target, Daily/Weekly/Custom schedule, cue/anchor, local plan, existing per-habit inherited/off/custom reminder and draft-only new-habit-count recommendation. There are no handlers or writes yet; historical effective dates/scoped Undo/reminder permission rules remain required in chunk 10. `AppContainer` exposes lazy local strategy loading and provider-neutral `CoachService` with only the honest unconfigured implementation. No network/provider/secret/production fake response, Room schema/database/preference identity, persistence mutation, source-resource or screen change.
+- Checks: final assembly, **144 JVM tests** (18 new), **8 new Pixel 7 Android 17 Coach boundary checks**, and lint passed with zero failures/errors/skips and zero lint errors/26 existing advisories. Earlier selected **12 form/draft/privacy device regressions** also passed. The initial 20-case run had one expected-ranking assertion wrong; all eight Coach cases passed after correcting it and passed again after shortening/capping readings. Original bytes and every catalog field are checked at runtime; final APK/source bytes match exactly (37,955 bytes; SHA-256 `060c4c76706da0c77c2bce45222b98730055c82107928c8bd7873237a53d13ff`). Debug installation retained and cold launch returned `Status: ok`, `LaunchState: COLD`. No owner-data clear/uninstall/Git operation.
+- Visual/source evidence: read relevant SCR-06/09 and FLOW-08 contracts and visually inspected supplied planning/privacy pages. Existing form captures from the successful selected regressions preserve light reference 393 × 832dp Coach-card/Create composition and dark 360 × 640dp/font 1.5 keyboard-visible Create access. Native IME visibility is asserted but its pixels are outside the Compose capture. Captures are target `cache/chunk04-qa` (reused existing test names), inspection copies `/tmp/habit-chunk09-qa`; no Coach UI/runtime success is claimed. Bundled Poppler was incompatible with host glibc; system Poppler rendered the supplied pages successfully without installation or source edits.
+- Limits/next: lexical matching is a deterministic relevance heuristic, not language understanding or a diagnosis; ambiguous/negated questions remain conditional. Tests do not prove every OEM/process-death state or live-service behavior. No chunk 09 requirement remains incomplete. Chunk 10 adds persisted typed handlers, field-scoped ten-second Undo, Room thread/cache/action migration, cap-50 history and clear/export/delete/wipe attachment; screens remain chunk 11 and real Gemini configuration/terms chunk 12. Read the new local Coach contract in `DOMAIN_BEHAVIOR.md` before either integration.
 
 ## Chunk 08 integration details
 
@@ -70,7 +80,21 @@ Paths above are relative to `app/src/main/java/com/example/habit/` unless stated
 - `PlanningDraftContract`: validated typed result ↔ primitive `ArrayList<String>` navigation envelope, `RESULT_KEY = "planningDraftResult"`. NavHost observes the form entry's SavedStateHandle; the form validates the token and Coach setting, applies to its draft and consumes the result. A test detour exercises this. Actual Coach destination is not wired yet; card accurately says it is not connected and retains the draft. No fake production response or database write from prose.
 - Restoration tests cover saved primitive fields, Bundle/Parcel and Room-backed ViewModel save. Actual OS process kill during a commit is not tested and exactly-once persistence across arbitrary process death is not promised.
 
-## Verified state (chunk 08)
+## Verified state (chunk 09)
+
+Final command (after the short-reading adjustment):
+
+```sh
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.habit.CoachBoundaryRuntimeTest :app:lintDebug
+```
+
+Passed **144 JVM tests, 8 Android tests, zero failures/errors/skips; lint zero errors/26 existing advisories**. An earlier selected run included these eight plus `FormPersistenceTest#parcelRestorationKeepsTypedDraftAndThenPersistsThroughRealViewModel`, both `PreferencesPrivacyTest` checks and all nine `HabitFormUiTest` checks. Those **12 regressions passed**; only the actual-catalog expected-ranking assertion failed. It was corrected to include the supplied card_39 with both starting/simplicity tags, without changing production ranking. The eight affected checks subsequently passed twice. Do not describe that earlier 20-case report as a zero-failure full run.
+
+Final standard JVM/connected/lint reports contain the successful final checks. The earlier 20-case report, including the passing 12 regressions and initial assertion failure, is preserved at `app/build/reports/chunk09-verification/first-device/`. Final source/APK equality and installed-package/cold-launch checks passed; `git diff --check` passed. No migration/full unrelated-device rerun was needed for this unchanged-schema, contract-only chunk.
+
+Suggested chunk 09 commit: `feat: add supplied Coach strategy retrieval and strict private contracts`
+
+## Earlier verified state (chunk 08)
 
 Final focused command:
 
@@ -90,16 +114,16 @@ Limits/deferred checks: no actual reboot/time-zone change, long Doze/OEM delay, 
 
 Suggested commit: `feat: add local reminders, versioned export and coordinated data clearing`
 
-## Next chunk 09 (only after approval)
+## Next chunk 10 (only after approval)
 
-Package the supplied 60-card catalog unchanged; validate IDs/required fields/attribution and implement deterministic relevant local retrieval. Define provider-neutral planning/existing-habit payloads, bounded questions, three-suggestion responses and closed typed-action validation, with minimal outbound data and explicit unavailable/failure contracts. Test catalog fidelity, ranking, malformed/unrequested IDs, incompatible actions and payload leakage. Do not enable a provider, fake production responses, Apply/history or new Coach screens prematurely.
+Implement the validated action handlers against existing dated settings and unsaved drafts, with actual action-specific confirmations. Persist per-habit Coach threads/caches and action identities using a data-preserving Room migration; cap threads at 50 messages and attach Clear Coach history/export/delete/wipe. Apply immediately and support ten-second field-scoped, conflict-aware Undo with controlled-time/failure/recreation/repeated-tap tests. Preserve completions/unrelated edits and existing draft contracts. Do not add Coach screens or configure external requests prematurely.
 
 ## Remaining scope
 
-09 actual 60-card strategy retrieval and strict Coach payload/action contract; 10 typed Apply + immediate local update/10-second scoped Undo/local history; 11 Coach screens/draft detours/root selection; 12 real external service; 13 end-to-end/design verification.
+10 typed Apply + immediate local update/10-second scoped Undo/local history; 11 Coach screens/draft detours/root selection; 12 real external service; 13 end-to-end/design verification.
 
 Owner prefers **Gemini Flash free API tier**. Credentials, exact model/version and applicable unpaid-service data-use terms require deliberate integration in chunk 12. Never silently configure external traffic or send full habits, local IDs, prohibited names, unrelated data or whole conversations. No unresolved product decision remains for chunk 08.
 
 ## Prompt for a new chat
 
-> After I authorise chunk 09, continue Habit Companion in this project. Read AGENTS.md, HANDOFF.md, DOMAIN_BEHAVIOR.md and IMPLEMENTATION_PLAN.md, inspect current changes, and implement only chunk 09 faithfully. Verify each logical step and relevant device/visual behavior; preserve existing data, source resources and draft contracts. I handle Git operations. Finish with an updated handoff, a one-line commit message and a brief chunk 10 proposal, then ask permission. For permission-required commands, show the exact command and purpose.
+> After I authorise chunk 10, continue Habit Companion in this project. Read AGENTS.md, HANDOFF.md, DOMAIN_BEHAVIOR.md and IMPLEMENTATION_PLAN.md, inspect current changes, and implement only chunk 10 faithfully. Verify each logical step and relevant device behavior; preserve existing data, source resources and draft contracts. I handle Git operations. Finish with an updated handoff, a one-line commit message and a brief chunk 11 proposal, then ask permission. For permission-required commands, show the exact command and purpose.

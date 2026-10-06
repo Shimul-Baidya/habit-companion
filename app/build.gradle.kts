@@ -4,6 +4,20 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// The supplied resource is the only editable catalog. Sync packages its exact bytes.
+abstract class SyncCoachAssets : DefaultTask() {
+    @get:InputFile abstract val catalogFile: RegularFileProperty
+    @get:OutputDirectory abstract val outputDirectory: DirectoryProperty
+    @TaskAction fun copyCatalog() {
+        val directory = outputDirectory.get().asFile.apply { mkdirs() }
+        catalogFile.get().asFile.copyTo(directory.resolve("coach_cards.json"), overwrite = true)
+    }
+}
+val coachAssets = tasks.register<SyncCoachAssets>("syncCoachAssets") {
+    catalogFile.set(rootProject.layout.projectDirectory.file("resources/coach_cards.json"))
+    outputDirectory.set(layout.buildDirectory.dir("generated/coachAssets"))
+}
+
 android {
     namespace = "com.example.habit"
     compileSdk {
@@ -40,6 +54,10 @@ android {
         compose = true
     }
     sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
+}
+
+androidComponents.onVariants { variant ->
+    variant.sources.assets?.addGeneratedSourceDirectory(coachAssets, SyncCoachAssets::outputDirectory)
 }
 
 ksp {

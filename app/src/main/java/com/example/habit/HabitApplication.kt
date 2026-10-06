@@ -2,6 +2,9 @@ package com.example.habit
 
 import android.app.Application
 import android.content.Context
+import com.example.habit.coach.StrategyRepository
+import com.example.habit.coach.CoachService
+import com.example.habit.coach.UnconfiguredCoachService
 import com.example.habit.data.controls.*
 import com.example.habit.reminders.*
 import kotlinx.coroutines.launch
@@ -22,6 +25,10 @@ import kotlinx.coroutines.SupervisorJob
  * wiring stays readable, and there is no build-time cost.
  */
 class AppContainer(context: Context) {
+    val strategies by lazy { StrategyRepository { context.applicationContext.assets.open("coach_cards.json").use {
+        val bytes = it.readBytes(); require(bytes.size <= 262_144); bytes
+    } } }
+    val coachService: CoachService by lazy { UnconfiguredCoachService() }
     private val gate = DataGate()
     private val database: HabitDatabase by lazy { HabitDatabase.build(context) }
 
