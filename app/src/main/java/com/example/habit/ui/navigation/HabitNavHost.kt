@@ -88,15 +88,8 @@ fun HabitNavHost(
                     defaultValue = false
                 },
             ),
-        ) { entry ->
+        ) {
             HomeScreen(
-                dbError = entry.arguments?.getBoolean(Routes.ARG_DB_ERROR) == true,
-                onRetry = {
-                    // Retry means re-running the read the splash failed on.
-                    navController.navigate(Routes.SPLASH) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                    }
-                },
                 onAddHabit = { navController.navigate(Routes.NEW_HABIT) },
                 onOpenCoach = { navController.navigate(Routes.COACH) },
                 onOpenHabit = { navController.navigate(Routes.COACH) },

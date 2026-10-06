@@ -14,6 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -43,6 +49,8 @@ fun CompletionRing(
     onClick: (() -> Unit)? = null,
     showCheck: Boolean = true,
     contentDescription: String? = null,
+    enabled: Boolean = true,
+    checked: Boolean? = null,
 ) {
     val sweep by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -73,16 +81,24 @@ fun CompletionRing(
         }
     }
 
+    val described = modifier.semantics {
+        contentDescription?.let { this.contentDescription = it }
+        checked?.let {
+            role = Role.Checkbox
+            toggleableState = if (it) ToggleableState.On else ToggleableState.Off
+        }
+    }
     if (onClick == null) {
-        Box(modifier = modifier) { ring() }
+        Box(modifier = described) { ring() }
     } else {
         IconButton(
+            enabled = enabled,
             onClick = {
                 // Completing is the moment worth confirming in the hand; undoing is not.
                 if (!filled) haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                 onClick()
             },
-            modifier = modifier
+            modifier = described
                 .size(Sizes.touchTarget)
                 .clip(CircleShape),
         ) {

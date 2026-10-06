@@ -22,15 +22,16 @@ import com.example.habit.ui.theme.Spacing
 
 /**
  * C-03 — streak chip. A 16dp flame plus the count at title/20sp in primary; both switch
- * to the danger token and a broken glyph at zero.
+ * to the danger token and a broken glyph at zero after settled history. New habits
+ * stay neutral; Weekly/mixed histories announce completed occurrences rather than days.
  *
  * Appears on SCR-04, SCR-07 and SCR-08.
  */
 @Composable
-fun StreakChip(streak: Int, modifier: Modifier = Modifier) {
-    val broken = streak == 0
-    val tint = if (broken) HabitTheme.colors.danger else HabitTheme.colors.primary
-    val description = pluralStringResource(R.plurals.streak_days, streak, streak)
+fun StreakChip(streak: Int, modifier: Modifier = Modifier, neutral: Boolean = false, occurrenceUnits: Boolean = false) {
+    val broken = streak == 0 && !neutral
+    val tint = when { neutral -> HabitTheme.colors.onSurfaceMuted; broken -> HabitTheme.colors.danger; else -> HabitTheme.colors.primary }
+    val description = pluralStringResource(if (occurrenceUnits) R.plurals.streak_occurrences else R.plurals.streak_days, streak, streak)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

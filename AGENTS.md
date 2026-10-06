@@ -109,7 +109,7 @@ Parse/validate the resource, retrieve/rank locally, and use matched cards as con
 - User-entered follow-up questions may be transmitted; explain this accurately. Do not claim absolutely no information ever leaves the device.
 - Coach enablement gates every entry, including cards/buttons and the Coach tab, and request dispatch. Preserve the four-tab structure; unavailable Coach must explain how to enable it. Handle setting changes during an in-flight request.
 - Local retrieval precedes the model call. Use one request per intended interaction; no background Coach traffic or network calls merely to render local screens.
-- Provider, endpoint/model, authentication and service privacy details are not yet supplied. Keep the service boundary explicit; never invent credentials, silently pick a provider or put a shared secret into the app. Test responses belong in tests/previews, not a production pretend-Coach.
+- The owner prefers Gemini Flash's free API tier. Record that preference without enabling requests prematurely. Exact model/version, credential provisioning, deployment and free-tier privacy acceptance remain chunk 12 integration details. Google's unpaid-service terms allow product improvement and human review of inputs/outputs, with regional exceptions; verify applicable terms before integration. Keep the service boundary explicit; never invent credentials or put a shared secret into the app. Test responses belong in tests/previews, not a production pretend-Coach.
 
 ### Coach states and persistence
 

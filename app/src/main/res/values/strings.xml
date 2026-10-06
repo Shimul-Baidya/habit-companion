@@ -71,4 +71,15 @@
     <string name="new_habit_create">Create habit</string>
     <string name="new_habit_stub_note">Stub for SCR-05. Icon, colour, frequency and the Coach card are specified on slide 12 and are not built yet.</string>
     <string name="back">Back</string>
+    <string name="home_write_error">Could not save your completion. Please try again.</string>
+    <string name="home_no_due_today">No habits due today</string>
+    <string name="home_not_due_habit">%1$s is not due today</string>
+    <string name="home_unmark_habit">Mark %1$s not done for today</string>
+    <string name="home_quantity_habit">Quantity progress for %1$s</string>
+    <string name="frequency_weekly_quota">%1$d completions per week</string>
+    <string name="frequency_custom_days">%1$d selected days per week</string>
+    <plurals name="streak_occurrences">
+        <item quantity="one">%d completion streak</item>
+        <item quantity="other">%d completion streak</item>
+    </plurals>
 </resources>

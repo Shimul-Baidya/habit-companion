@@ -91,8 +91,12 @@ class HabitHistoryRepository(private val database: HabitDatabase, private val cl
         requireNotNull(historyDao.record(id)).toHistory()
     }
 
-    suspend fun correct(id: Long, date: LocalDate, value: CompletionValue?) = database.withTransaction {
+    suspend fun correct(id: Long, date: LocalDate, value: CompletionValue?) = writeCompletion(id, date, value, requireToday = false)
+    suspend fun logToday(id: Long, date: LocalDate, value: CompletionValue) = writeCompletion(id, date, value, requireToday = true)
+
+    private suspend fun writeCompletion(id: Long, date: LocalDate, value: CompletionValue?, requireToday: Boolean) = database.withTransaction {
         val today = today()
+        require(!requireToday || date == today) { "Date changed; refresh before logging today" }
         val record = requireNotNull(historyDao.record(id))
         val history = record.toHistory()
         require(CompletionRules.canCorrect(history, date, today)) { "Date is not eligible" }

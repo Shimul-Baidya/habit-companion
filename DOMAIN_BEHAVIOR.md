@@ -1,6 +1,6 @@
 # Habit Companion historical domain contract
 
-Chunk 01 contract, 6 October 2026, extended by chunk 02 persistence. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
+Chunk 01 contract, 6 October 2026, extended by chunks 02–03 persistence and shared statistics. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
 
 ## Dates and historical settings
 
@@ -40,8 +40,19 @@ Consistency is completed required occurrences divided by all eligible required o
 
 ## Integration limits
 
-The existing `StreakCalculator` still serves the current screens and retains its known limitations until chunk 03. The old form/toggle path now writes through the transactional history repository, preventing habits without initial dated settings. New schedules use this approved contract.
+Chunk 03 removes the legacy `StreakCalculator` and its 400-day repository window. Home and future detail/Progress/Profile consumers use `HabitSnapshot`/`StatsAggregator` over atomic complete Room history. The old form/toggle path now writes through the transactional history repository, preventing habits without initial dated settings. New schedules use this approved contract.
 
 Chunk 02 retains the database name `habitflow.db`, original v1 columns and original timestamps. Migration freezes creation/archive local dates using the device zone in which v1 would have resolved them. v1 has no original creation-zone metadata, so earlier travel/time-zone context cannot be reconstructed. v1 Weekly masks become historical Custom eligibility, with original frequency/mask metadata retained. v1 Daily masks that differed from all seven days also retain their actual old mask semantics. Legacy goal/count are not quantities: row presence remains binary completion. Invalid legacy masks or impossible dates are preserved as raw records and produce validation errors rather than being guessed, deleted or silently treated as an empty database.
 
 Schedule and tracking effective histories are stored separately, then merged by date into domain snapshots. A pending schedule change cannot overwrite a later target change. Repeated edits to the same field/effective date replace that pending field value; combined edits validate and commit atomically. Metadata, cues/plans and per-habit reminder overrides remain separate from expectation history. Archive Undo is limited to five seconds and updates only archive fields from the latest stored habit, preserving other edits and completion records.
+
+
+## Shared statistics and date refresh (chunk 03)
+
+One snapshot evaluates each habit's dated occurrences and produces active rows, current/all-time best, attention, lifetime totals, week daily buckets and actual 4–6 clipped month-week buckets. Ranged detail consistency sums the same required occurrences inside the selected month. Aggregate consistency sums completed and eligible counts before division. No eligible data has no percentage; future daily dates contribute nothing. Historical archived occurrences remain in totals/all-time best; active/top-streak rows exclude archived habits. Deleting removes their contribution on the next atomic observation. Quantity partial progress is amount/that date's target, clamped to 0–1; achievement remains a separate threshold result.
+
+Weekly successes appear on their achieved dates, closed shortfalls on Sunday, and open pending slots on the evaluated date. Month boundaries and the display week-start can move chart buckets, never the quota's Monday–Sunday definition. Once this week's quota is met, an unfinished extra date is not due on Home; retained extra logs can still fill quota slots after corrections. A completed eligible today remains visible as completed, with no inflation of aggregate quota metrics.
+
+`DeviceClock` reads the current device zone. `DateMonitor` publishes each local midnight (including 23/25-hour daylight-saving days), and Activity resume/date/time/time-zone broadcasts refresh and rearm it. Today's write rechecks the date transactionally, so a midnight race cannot silently become a past correction. Intentional past corrections use a separate operation. If the clock/zone moves backward, statistics query facts as of the displayed date, preserving later already-stored records for when that date returns; new future writes remain forbidden. This is a display/evaluation accommodation, not a rewrite of history.
+
+Home retains prior successful data after a read failure, disables stale completion writes, and exposes Retry in place. Loading, genuine empty, no-due, all-done, read failure and write failure remain distinct. A read failure never manufactures empty habits, and a write failure never claims successful completion. Later chunks reuse these facts and build their own screen-specific loading/error presentation.

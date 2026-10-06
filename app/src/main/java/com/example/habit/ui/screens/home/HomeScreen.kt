@@ -3,7 +3,12 @@ package com.example.habit.ui.screens.home
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,7 +27,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habit.R
@@ -45,8 +49,6 @@ import java.time.LocalDate
  */
 @Composable
 fun HomeScreen(
-    dbError: Boolean,
-    onRetry: () -> Unit,
     onAddHabit: () -> Unit,
     onOpenCoach: () -> Unit,
     onOpenHabit: (Long) -> Unit,
@@ -55,13 +57,10 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // Picks up a date change if the app is left open across midnight.
-    LaunchedEffect(Unit) { viewModel.refreshDate() }
-
     HomeContent(
         state = state,
-        dbError = dbError,
-        onRetry = onRetry,
+        onRetry = viewModel::retry,
+        onClearActionError = viewModel::clearActionError,
         onToggle = viewModel::toggle,
         onAddHabit = onAddHabit,
         onOpenCoach = onOpenCoach,
@@ -71,15 +70,15 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeContent(
+internal fun HomeContent(
     state: HomeUiState,
-    dbError: Boolean,
     onRetry: () -> Unit,
     onToggle: (HabitStatus) -> Unit,
     onAddHabit: () -> Unit,
     onOpenCoach: () -> Unit,
     onOpenHabit: (HabitStatus) -> Unit,
     onSelectTab: (HomeTab) -> Unit,
+    onClearActionError: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -88,16 +87,23 @@ private fun HomeContent(
     val retryLabel = stringResource(R.string.home_retry)
     val tabDisabled = stringResource(R.string.empty_tab_disabled)
 
-    // SCR-01's failure path lands here: Room threw, so Home opened empty with a retry.
-    LaunchedEffect(dbError) {
-        if (dbError) {
+    LaunchedEffect(state.readError) {
+        if (state.readError && state.allHabits.isNotEmpty()) {
             val result = snackbarHostState.showSnackbar(errorMessage, actionLabel = retryLabel)
             if (result == SnackbarResult.ActionPerformed) onRetry()
         }
     }
 
+    val actionError = stringResource(R.string.home_write_error)
+    LaunchedEffect(state.actionError) {
+        if (state.actionError) {
+            snackbarHostState.showSnackbar(actionError)
+            onClearActionError()
+        }
+    }
+
     // 7 — on the empty Home, Progress and Coach are visible but inert.
-    val enabledTabs = if (state.isEmpty) {
+    val enabledTabs = if (state.isEmpty || state.snapshot == null) {
         setOf(HomeTab.HOME, HomeTab.PROFILE)
     } else {
         HomeTab.entries.toSet()
@@ -122,7 +128,7 @@ private fun HomeContent(
         },
         floatingActionButton = {
             // 12 — only on the populated Home; SCR-03 already has a filled Add button.
-            if (!state.isEmpty) {
+            if (state.allHabits.isNotEmpty()) {
                 FloatingActionButton(
                     onClick = onAddHabit,
                     shape = Radius.card,
@@ -140,6 +146,21 @@ private fun HomeContent(
             }
         },
     ) { innerPadding ->
+        if (state.allHabits.isEmpty() && (state.loading || state.readError)) {
+            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                if (state.readError) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        modifier = Modifier.padding(Spacing.gutter)) {
+                        Text(errorMessage, color = HabitTheme.colors.onSurface, style = HabitTheme.type.body)
+                        TextButton(onClick = onRetry) { Text(retryLabel) }
+                    }
+                } else {
+                    CircularProgressIndicator(color = HabitTheme.colors.primary)
+                }
+            }
+            return@Scaffold
+        }
         Crossfade(
             targetState = state.isEmpty,
             animationSpec = tween(durationMillis = Motion.CROSSFADE),
@@ -175,7 +196,6 @@ private fun EmptyHomePreview() {
     HabitTheme {
         HomeContent(
             state = HomeUiState(loading = false, userName = "Shimul"),
-            dbError = false,
             onRetry = {}, onToggle = {}, onAddHabit = {},
             onOpenCoach = {}, onOpenHabit = {}, onSelectTab = {},
         )
@@ -185,7 +205,7 @@ private fun EmptyHomePreview() {
 @Preview(widthDp = 393, heightDp = 832)
 @Composable
 private fun TodayHomePreview() {
-    HabitTheme { HomeContent(state = sampleState(), dbError = false, onRetry = {}, onToggle = {},
+    HabitTheme { HomeContent(state = sampleState(), onRetry = {}, onToggle = {},
         onAddHabit = {}, onOpenCoach = {}, onOpenHabit = {}, onSelectTab = {}) }
 }
 
@@ -193,7 +213,7 @@ private fun TodayHomePreview() {
 @Composable
 private fun TodayHomeDarkPreview() {
     HabitTheme(darkTheme = true) {
-        HomeContent(state = sampleState(), dbError = false, onRetry = {}, onToggle = {},
+        HomeContent(state = sampleState(), onRetry = {}, onToggle = {},
             onAddHabit = {}, onOpenCoach = {}, onOpenHabit = {}, onSelectTab = {})
     }
 }

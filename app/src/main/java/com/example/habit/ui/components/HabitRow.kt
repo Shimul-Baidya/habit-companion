@@ -20,6 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.habit.R
 import com.example.habit.data.local.HabitEntity
 import com.example.habit.domain.HabitStatus
+import com.example.habit.domain.HabitSchedule
+import com.example.habit.domain.TrackingMode
+import com.example.habit.domain.HabitAttention
 import com.example.habit.ui.theme.Elevation
 import com.example.habit.ui.theme.HabitTheme
 import com.example.habit.ui.theme.Radius
@@ -57,9 +60,16 @@ fun HabitRow(
                 .padding(horizontal = Spacing.lg),
         ) {
             CompletionRing(
-                progress = if (status.doneToday) 1f else 0f,
+                progress = status.progressToday,
                 onClick = onToggle,
-                contentDescription = stringResource(R.string.home_toggle_habit, status.habit.name),
+                contentDescription = stringResource(when {
+                    !status.scheduledToday -> R.string.home_not_due_habit
+                    status.settings.tracking != TrackingMode.Binary -> R.string.home_quantity_habit
+                    status.doneToday -> R.string.home_unmark_habit
+                    else -> R.string.home_toggle_habit
+                }, status.habit.name),
+                enabled = status.scheduledToday && status.canLogToday && status.settings.tracking == TrackingMode.Binary,
+                checked = if (status.settings.tracking == TrackingMode.Binary) status.doneToday else null,
             )
 
             Column(
@@ -74,7 +84,7 @@ fun HabitRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = frequencyLabel(status.habit),
+                    text = frequencyLabel(status.settings.schedule),
                     style = HabitTheme.type.caption,
                     color = HabitTheme.colors.onSurfaceMuted,
                     maxLines = 1,
@@ -82,18 +92,16 @@ fun HabitRow(
                 )
             }
 
-            StreakChip(streak = status.currentStreak)
+            StreakChip(streak = status.currentStreak, neutral = status.attention == HabitAttention.NEUTRAL, occurrenceUnits = status.usesOccurrenceStreak)
         }
     }
 }
 
 @Composable
-private fun frequencyLabel(habit: HabitEntity): String {
-    val scheduled = Integer.bitCount(habit.scheduledDays)
-    return when {
-        scheduled >= 7 -> stringResource(R.string.frequency_daily)
-        else -> stringResource(R.string.frequency_days_a_week, scheduled)
-    }
+private fun frequencyLabel(schedule: HabitSchedule): String = when (schedule) {
+    HabitSchedule.Daily -> stringResource(R.string.frequency_daily)
+    is HabitSchedule.Weekly -> stringResource(R.string.frequency_weekly_quota, schedule.completions)
+    is HabitSchedule.Custom -> stringResource(R.string.frequency_custom_days, schedule.weekdays.size)
 }
 
 @Preview(widthDp = 393, showBackground = true, backgroundColor = 0xFFF3F7F5)

@@ -8,7 +8,11 @@ import com.example.habit.data.local.HabitDatabase
 import com.example.habit.data.prefs.SettingsRepository
 import com.example.habit.data.HabitHistoryRepository
 import com.example.habit.data.HabitRepository
-import java.time.Clock
+import com.example.habit.domain.DateMonitor
+import com.example.habit.domain.DeviceClock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Hand-rolled container rather than a DI framework — the graph is small enough that the
@@ -20,8 +24,11 @@ class AppContainer(context: Context) {
     val habitDao: HabitDao by lazy { database.habitDao() }
     val completionDao: CompletionDao by lazy { database.completionDao() }
     val settings: SettingsRepository by lazy { SettingsRepository(context) }
-    val habitHistory: HabitHistoryRepository by lazy { HabitHistoryRepository(database, Clock.systemDefaultZone()) }
-    val habits: HabitRepository by lazy { HabitRepository(habitDao, completionDao, habitHistory) }
+    private val clock = DeviceClock()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val dates: DateMonitor by lazy { DateMonitor(clock, scope) }
+    val habitHistory: HabitHistoryRepository by lazy { HabitHistoryRepository(database, clock) }
+    val habits: HabitRepository by lazy { HabitRepository(habitHistory) }
 }
 
 class HabitApplication : Application() {

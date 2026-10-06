@@ -57,12 +57,14 @@ fun TodayHome(
                 TodaySummary(state)
                 Spacer(Modifier.height(Spacing.xxl))
                 SectionHeader(done = state.doneToday, total = state.totalToday)
+                if (state.noDueToday) Text(stringResource(R.string.home_no_due_today),
+                    style = HabitTheme.type.caption, color = HabitTheme.colors.onSurfaceMuted)
             }
         }
 
         items(state.healthy, key = { "habit-${it.habit.id}" }) { status ->
             HabitRow(
-                status = status,
+                status = status.copy(canLogToday = status.canLogToday && state.canWrite && status.habit.id !in state.writingIds),
                 onToggle = { onToggle(status) },
                 onOpen = { onOpenHabit(status) },
                 modifier = Modifier.padding(horizontal = Spacing.gutter),
@@ -76,7 +78,7 @@ fun TodayHome(
             }
             items(state.atRisk, key = { "at-risk-${it.habit.id}" }) { status ->
                 HabitRow(
-                    status = status,
+                    status = status.copy(canLogToday = status.canLogToday && state.canWrite && status.habit.id !in state.writingIds),
                     onToggle = { onToggle(status) },
                     onOpen = { onOpenHabit(status) },
                     modifier = Modifier.padding(horizontal = Spacing.gutter),
@@ -89,7 +91,7 @@ fun TodayHome(
     }
 }
 
-/** 4 and 5 — the 64dp today ring beside the longest active streak. */
+/** 4 and 5 — the 64dp today ring beside the all-time best streak (including archived history). */
 @Composable
 private fun TodaySummary(state: HomeUiState) {
     val ringDescription = stringResource(
@@ -113,7 +115,7 @@ private fun TodaySummary(state: HomeUiState) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = state.longestActiveStreak.toString(),
+                text = state.bestStreak.toString(),
                 style = HabitTheme.type.stat,
                 color = HabitTheme.colors.primary,
             )
