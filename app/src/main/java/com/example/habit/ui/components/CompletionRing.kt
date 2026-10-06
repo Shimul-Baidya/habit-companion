@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.semantics.Role
@@ -50,6 +51,7 @@ fun CompletionRing(
     showCheck: Boolean = true,
     contentDescription: String? = null,
     enabled: Boolean = true,
+    progressDescription: String? = null,
     checked: Boolean? = null,
 ) {
     val sweep by animateFloatAsState(
@@ -83,6 +85,7 @@ fun CompletionRing(
 
     val described = modifier.semantics {
         contentDescription?.let { this.contentDescription = it }
+        progressDescription?.let { stateDescription = it }
         checked?.let {
             role = Role.Checkbox
             toggleableState = if (it) ToggleableState.On else ToggleableState.Off

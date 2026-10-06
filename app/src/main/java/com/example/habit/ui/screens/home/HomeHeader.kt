@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -13,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.example.habit.R
 import com.example.habit.ui.theme.Elevation
@@ -44,8 +47,7 @@ fun HomeHeader(userName: String, today: LocalDate, modifier: Modifier = Modifier
                 text = userName.ifBlank { stringResource(R.string.greeting_no_name) },
                 style = HabitTheme.type.display,
                 color = HabitTheme.colors.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+
             )
         }
         DateChip(today)
@@ -59,15 +61,15 @@ private fun DateChip(today: LocalDate) {
         shape = Radius.md,
         colors = CardDefaults.cardColors(containerColor = HabitTheme.colors.surfaceCard),
         elevation = CardDefaults.cardElevation(defaultElevation = Elevation.card),
-        // The date is already announced by the greeting block; skip it for screen readers.
+        // Announce the full local date once while preserving the compact visual chip.
         modifier = Modifier
-            .size(width = 72.dp, height = 64.dp)
-            .clearAndSetSemantics {},
+            .widthIn(min = 72.dp).heightIn(min = 64.dp)
+            .clearAndSetSemantics { contentDescription = today.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.FULL)) },
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth().size(width = 72.dp, height = 64.dp),
+            modifier = Modifier.widthIn(min = 72.dp).heightIn(min = 64.dp).padding(8.dp),
         ) {
             Text(
                 text = today.dayOfWeek
@@ -77,7 +79,7 @@ private fun DateChip(today: LocalDate) {
                 color = HabitTheme.colors.onSurfaceMuted,
             )
             Text(
-                text = today.dayOfMonth.toString(),
+                text = today.format(java.time.format.DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())),
                 style = HabitTheme.type.title,
                 color = HabitTheme.colors.onSurface,
             )

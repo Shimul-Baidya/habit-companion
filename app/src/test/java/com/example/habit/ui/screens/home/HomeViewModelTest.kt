@@ -1,5 +1,6 @@
 package com.example.habit.ui.screens.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.example.habit.data.*
 import com.example.habit.data.local.*
@@ -38,6 +39,14 @@ class HomeViewModelTest {
             if (failed) throw IOException("isolated test failure")
             HabitSnapshot.from(data, today, weekStart)
         }
+        var lastQuantity: CompletionValue.Quantity? = null
+        override suspend fun quantityToday(habit: HabitEntity, today: LocalDate, value: CompletionValue.Quantity?) {
+            toggleToday(habit, today, value != null)
+            lastQuantity = value
+            records.value = records.value.map { record -> record.copy(completions =
+                if (value == null) emptyList() else listOf(CompletionEntity(habit.id, today.toEpochDay(), completedAt = 1,
+                    trackingMode = "QUANTITY", quantityAmount = value.amount.toPlainString(), quantityUnit = value.unit))) }
+        }
         override suspend fun toggleToday(habit: HabitEntity, today: LocalDate, done: Boolean) {
             writes++
             hold?.await()
@@ -49,7 +58,7 @@ class HomeViewModelTest {
         listOf(ScheduleHistoryEntity.from(1, monday, schedule)),
         listOf(TrackingHistoryEntity.from(1, monday, TrackingMode.Binary)), emptyList())
     private fun model(source: Source, dates: Dates = Dates(monday), prefs: Flow<SettingsRepository.Configuration> =
-        MutableStateFlow(SettingsRepository.Configuration())) = HomeViewModel(source, prefs, dates).also { store.put("home", it) }
+        MutableStateFlow(SettingsRepository.Configuration())) = HomeViewModel(source, prefs, dates, SavedStateHandle()).also { store.put("home", it) }
 
     @Test fun loadingIsNotEmptyUntilSuccessfulRead() = runTest(dispatcher) {
         val vm = model(Source())
@@ -176,4 +185,62 @@ class HomeViewModelTest {
         assertEquals(before.lifetime, after.lifetime)
         assertEquals(monday.minusDays(1), after.week.first().range.first)
     }
+    private fun quantityRecord(schedule: HabitSchedule = HabitSchedule.Daily) = record(schedule).copy(
+        tracking = listOf(TrackingHistoryEntity.from(1, monday, TrackingMode.Quantity(java.math.BigDecimal("10"), "pages"))))
+
+    @Test fun quantityPartialAchievedAndClearUseRealObservedFacts() = runTest(dispatcher) {
+        val source = Source().apply { records.value = listOf(quantityRecord()) }
+        val vm = model(source); runCurrent()
+        vm.complete(vm.state.value.allHabits.single()); vm.changeAmount("2,5"); vm.saveQuantity(); runCurrent()
+        assertNull(vm.state.value.quantity)
+        assertEquals(0.25f, vm.state.value.allHabits.single().progressToday)
+        assertFalse(vm.state.value.allHabits.single().doneToday)
+        vm.complete(vm.state.value.allHabits.single()); assertEquals("2.5", vm.state.value.quantity!!.amount)
+        vm.changeAmount("10"); vm.saveQuantity(); runCurrent()
+        assertTrue(vm.state.value.allHabits.single().doneToday)
+        vm.complete(vm.state.value.allHabits.single()); vm.saveQuantity(clear = true); runCurrent()
+        assertNull(source.lastQuantity); assertFalse(vm.state.value.allHabits.single().doneToday)
+        assertEquals(3, source.writes)
+    }
+    @Test fun quantityInvalidRepeatedTapFailureAndRetryRetainInput() = runTest(dispatcher) {
+        val source = Source().apply { records.value = listOf(quantityRecord()); writeFailure = true }
+        val vm = model(source); runCurrent()
+        vm.complete(vm.state.value.allHabits.single()); vm.changeAmount("-1"); vm.saveQuantity(); runCurrent()
+        assertTrue(vm.state.value.quantity!!.invalid); assertEquals(0, source.writes)
+        vm.changeAmount("4.25"); source.hold = CompletableDeferred()
+        vm.saveQuantity(); vm.saveQuantity(); runCurrent()
+        assertEquals(1, source.writes); assertTrue(vm.state.value.quantity!!.saving)
+        vm.dismissQuantity(); assertNotNull(vm.state.value.quantity)
+        source.hold!!.complete(Unit); runCurrent()
+        assertTrue(vm.state.value.quantity!!.failed); assertEquals("4.25", vm.state.value.quantity!!.amount)
+        source.writeFailure = false; vm.saveQuantity(); runCurrent()
+        assertNull(vm.state.value.quantity); assertEquals(2, source.writes)
+    }
+    @Test fun quantitySavedDraftRestoresButDateChangeCannotBecomePastCorrection() = runTest(dispatcher) {
+        val saved = SavedStateHandle()
+        val source = Source().apply { records.value = listOf(quantityRecord()) }; val dates = Dates(monday)
+        val vm = HomeViewModel(source, MutableStateFlow(SettingsRepository.Configuration()), dates, saved)
+        store.put("first", vm); runCurrent()
+        vm.complete(vm.state.value.allHabits.single()); vm.changeAmount("3.75")
+        val restored = HomeViewModel(source, MutableStateFlow(SettingsRepository.Configuration()), dates, saved)
+        store.put("restored", restored); runCurrent(); assertEquals("3.75", restored.state.value.quantity!!.amount)
+        dates.actual = monday.plusDays(1); restored.saveQuantity(); runCurrent()
+        assertEquals(0, source.writes); assertTrue(restored.state.value.quantity!!.stale)
+        restored.dismissQuantity(); restored.complete(restored.state.value.allHabits.single())
+        assertEquals(monday.plusDays(1), restored.state.value.quantity!!.date)
+    }
+    @Test fun quantityRestDayDeletionAndReadFailureCannotWrite() = runTest(dispatcher) {
+        val source = Source().apply { records.value = listOf(quantityRecord(HabitSchedule.Custom(setOf(DayOfWeek.TUESDAY)))) }
+        val vm = model(source); runCurrent(); vm.complete(vm.state.value.allHabits.single()); assertNull(vm.state.value.quantity)
+        source.records.value = listOf(quantityRecord()); runCurrent(); vm.complete(vm.state.value.allHabits.single()); vm.changeAmount("1")
+        source.fail.value = true; runCurrent(); vm.saveQuantity(); runCurrent(); assertEquals(0, source.writes)
+        source.fail.value = false; vm.retry(); runCurrent(); source.records.value = emptyList(); runCurrent()
+        vm.saveQuantity(); assertTrue(vm.state.value.quantity!!.stale); assertEquals(0, source.writes)
+    }
+    @Test fun coachSettingGatesEmptyShortcutAndRespondsToChanges() = runTest(dispatcher) {
+        val prefs = MutableStateFlow(SettingsRepository.Configuration(coachEnabled = false)); val vm = model(Source(), prefs = prefs)
+        runCurrent(); assertFalse(vm.state.value.coachEnabled)
+        prefs.value = prefs.value.copy(coachEnabled = true); runCurrent(); assertTrue(vm.state.value.coachEnabled)
+    }
+
 }

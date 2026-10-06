@@ -5,6 +5,11 @@ package com.example.habit.ui.navigation
  * Follow the UI Flow for caller-aware navigation rather than creating a route for each state.
  */
 object Routes {
+    const val MAIN = "main"
+    const val ARG_HABIT_ID = "habitId"
+    const val HABIT_DETAIL = "habit/{habitId}"
+    fun detail(id: Long): String { require(id > 0); return "habit/$id" }
+
     /** SCR-01 */
     const val SPLASH = "splash"
 

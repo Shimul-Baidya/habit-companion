@@ -13,6 +13,7 @@ import java.time.LocalDate
 interface HabitDataSource {
     fun observeSnapshot(today: LocalDate, weekStart: DayOfWeek): Flow<HabitSnapshot>
     suspend fun toggleToday(habit: HabitEntity, today: LocalDate, done: Boolean)
+    suspend fun quantityToday(habit: HabitEntity, today: LocalDate, value: CompletionValue.Quantity?)
 }
 
 /** Atomic Room records feed one complete historical calculation path. Failures propagate. */
@@ -27,6 +28,10 @@ class HabitRepository(private val history: HabitHistoryRepository) : HabitDataSo
     /** SCR-04 element 8: one tap toggles today. */
     override suspend fun toggleToday(habit: HabitEntity, today: LocalDate, done: Boolean) {
         history.logToday(habit.id, today, CompletionValue.Binary(done))
+    }
+
+    override suspend fun quantityToday(habit: HabitEntity, today: LocalDate, value: CompletionValue.Quantity?) {
+        history.logToday(habit.id, today, value)
     }
 
     suspend fun create(habit: HabitEntity): Long = history.createLegacy(habit)

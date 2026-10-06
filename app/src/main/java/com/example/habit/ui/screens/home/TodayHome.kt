@@ -1,5 +1,9 @@
 package com.example.habit.ui.screens.home
 
+import androidx.compose.foundation.border
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import com.example.habit.ui.theme.Radius
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -45,9 +52,9 @@ fun TodayHome(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(contentPadding).testTag("home-habits"),
     ) {
         item(key = "header") {
             Column(modifier = Modifier.padding(horizontal = Spacing.gutter)) {
@@ -57,8 +64,6 @@ fun TodayHome(
                 TodaySummary(state)
                 Spacer(Modifier.height(Spacing.xxl))
                 SectionHeader(done = state.doneToday, total = state.totalToday)
-                if (state.noDueToday) Text(stringResource(R.string.home_no_due_today),
-                    style = HabitTheme.type.caption, color = HabitTheme.colors.onSurfaceMuted)
             }
         }
 
@@ -86,8 +91,8 @@ fun TodayHome(
             }
         }
 
-        // Clears the FAB, which sits 16dp from both edges.
-        item(key = "fab-spacer") { Spacer(Modifier.height(88.dp)) }
+        // The FAB has its own reserved strip; only a normal trailing gutter is needed.
+        item(key = "list-end") { Spacer(Modifier.height(Spacing.lg)) }
     }
 }
 
@@ -99,27 +104,32 @@ private fun TodaySummary(state: HomeUiState) {
         state.doneToday,
         state.totalToday,
     )
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xl),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Box(modifier = Modifier.semantics { contentDescription = ringDescription }) {
-            CompletionRing(
-                progress = state.ringProgress,
-                size = 64.dp,
-                stroke = 6.dp,
-                showCheck = state.allDone,
-            )
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = state.bestStreak.toString(),
-                style = HabitTheme.type.stat,
-                color = HabitTheme.colors.primary,
-            )
-            SectionLabel(text = stringResource(R.string.home_streak_label))
+    val count = "${state.doneToday}/${state.totalToday}"
+    val ringSize = maxOf(64, count.length * 11 + 16).dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    Card(shape = Radius.card, colors = CardDefaults.cardColors(containerColor = HabitTheme.colors.surfaceCard),
+        modifier = Modifier.fillMaxWidth().border(Elevation.cardOutline, HabitTheme.colors.outline, Radius.card)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+            modifier = Modifier.fillMaxWidth().padding(Spacing.lg)) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.semantics { contentDescription = ringDescription }) {
+                CompletionRing(progress = state.ringProgress, size = ringSize, stroke = 6.dp, showCheck = false)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(count, style = HabitTheme.type.title, color = HabitTheme.colors.onSurface)
+                    Text(stringResource(R.string.home_section_today).uppercase(), style = HabitTheme.type.micro, color = HabitTheme.colors.onSurfaceMuted)
+                }
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                val summary = when {
+                    state.noDueToday -> stringResource(R.string.home_no_due_today)
+                    state.allDone -> stringResource(R.string.home_all_done)
+                    else -> pluralStringResource(R.plurals.home_left_today, state.totalToday - state.doneToday, state.totalToday - state.doneToday)
+                }
+                Text(summary, style = HabitTheme.type.body,
+                    color = HabitTheme.colors.onSurface)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Text(state.bestStreak.toString(), style = HabitTheme.type.stat, color = HabitTheme.colors.primary)
+                    SectionLabel(text = stringResource(R.string.home_streak_label))
+                }
+            }
         }
     }
 }

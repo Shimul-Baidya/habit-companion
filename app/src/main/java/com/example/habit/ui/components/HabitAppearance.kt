@@ -1,7 +1,7 @@
 package com.example.habit.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Adjust
+import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -22,5 +22,5 @@ fun habitIcon(key: String): ImageVector = when (key) {
     "book" -> Icons.AutoMirrored.Filled.MenuBook
     "leaf" -> Icons.Filled.Eco
     "focus" -> Icons.Filled.Block
-    else -> Icons.Filled.Adjust
+    else -> Icons.Outlined.WaterDrop
 }

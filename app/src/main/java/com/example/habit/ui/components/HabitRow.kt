@@ -2,11 +2,18 @@ package com.example.habit.ui.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import com.example.habit.ui.theme.habitAccent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -15,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.habit.R
 import com.example.habit.data.local.HabitEntity
@@ -47,18 +53,56 @@ fun HabitRow(
         elevation = CardDefaults.cardElevation(defaultElevation = Elevation.card),
         modifier = modifier
             .fillMaxWidth()
-            .height(Sizes.habitRowHeight)
-            .border(Elevation.cardOutline, HabitTheme.colors.outline, Radius.card)
-            .clickable(onClick = onOpen),
+            .heightIn(min = Sizes.habitRowHeight)
+            .border(Elevation.cardOutline, HabitTheme.colors.outline, Radius.card),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Sizes.habitRowHeight)
+                .heightIn(min = Sizes.habitRowHeight)
                 .padding(horizontal = Spacing.lg),
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                modifier = Modifier.weight(1f).heightIn(min = Sizes.touchTarget).clickable(onClick = onOpen)
+                    .padding(vertical = Spacing.sm),
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp).clip(Radius.md)
+                    .background(HabitTheme.colors.habitAccent(status.habit.colorKey).copy(alpha = 0.16f))) {
+                    Icon(habitIcon(status.habit.iconKey), contentDescription = null,
+                        tint = HabitTheme.colors.habitAccent(status.habit.colorKey), modifier = Modifier.size(24.dp))
+                }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = status.habit.name,
+                        style = HabitTheme.type.title,
+                        color = HabitTheme.colors.onSurface,
+                    )
+                    Text(
+                        text = when {
+                            !status.scheduledToday -> stringResource(if (status.settings.schedule is HabitSchedule.Weekly) R.string.home_weekly_met else R.string.home_row_not_due)
+                            status.settings.tracking is TrackingMode.Quantity -> {
+                                val mode = status.settings.tracking
+                                val amount = (status.valueToday as? com.example.habit.domain.CompletionValue.Quantity)?.amount
+                                val progress = if (amount == null) "${mode.target.stripTrailingZeros().toPlainString()} ${mode.unit}"
+                                else "${amount.stripTrailingZeros().toPlainString()} / ${mode.target.stripTrailingZeros().toPlainString()} ${mode.unit}"
+                                if (status.settings.schedule is HabitSchedule.Weekly) "$progress · ${frequencyLabel(status.settings.schedule)}" else progress
+                            }
+                            else -> frequencyLabel(status.settings.schedule)
+                        },
+                        style = HabitTheme.type.caption,
+                        color = HabitTheme.colors.onSurfaceMuted,
+                    )
+                }
+
+            }
+            StreakChip(streak = status.currentStreak, neutral = status.attention == HabitAttention.NEUTRAL, occurrenceUnits = status.usesOccurrenceStreak)
             CompletionRing(
                 progress = status.progressToday,
                 onClick = onToggle,
@@ -68,31 +112,15 @@ fun HabitRow(
                     status.doneToday -> R.string.home_unmark_habit
                     else -> R.string.home_toggle_habit
                 }, status.habit.name),
-                enabled = status.scheduledToday && status.canLogToday && status.settings.tracking == TrackingMode.Binary,
+                progressDescription = (status.settings.tracking as? TrackingMode.Quantity)?.let { mode ->
+                    stringResource(if (status.doneToday) R.string.quantity_achieved_state else R.string.quantity_partial_state,
+                        (status.valueToday as? com.example.habit.domain.CompletionValue.Quantity)?.amount?.stripTrailingZeros()?.toPlainString() ?: "0",
+                        mode.target.stripTrailingZeros().toPlainString(), mode.unit)
+                },
+                enabled = status.scheduledToday && status.canLogToday,
                 checked = if (status.settings.tracking == TrackingMode.Binary) status.doneToday else null,
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = status.habit.name,
-                    style = HabitTheme.type.title,
-                    color = HabitTheme.colors.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = frequencyLabel(status.settings.schedule),
-                    style = HabitTheme.type.caption,
-                    color = HabitTheme.colors.onSurfaceMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            StreakChip(streak = status.currentStreak, neutral = status.attention == HabitAttention.NEUTRAL, occurrenceUnits = status.usesOccurrenceStreak)
         }
     }
 }

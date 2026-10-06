@@ -1,6 +1,6 @@
 # Habit Companion historical domain contract
 
-Chunk 01 contract, 6 October 2026, extended by chunks 02–04 persistence, shared statistics and form integration. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
+Chunk 01 contract, 6 October 2026, extended by chunks 02–05 persistence, shared statistics, forms and Home integration. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
 
 ## Dates and historical settings
 
@@ -69,3 +69,10 @@ Edit loads the latest independently stored schedule and tracking settings, inclu
 SavedStateHandle stores primitive draft fields, the initial edit snapshot, a draft token and successful save ID. Repeated submits are guarded before launching the write; recreation after reported success cannot insert a second habit. This is saved UI state, not a permanent draft database. Bundle/Parcel restoration is verified; arbitrary OS termination during a database commit has not been simulated and is not claimed to provide an exactly-once cross-process transaction guarantee.
 
 The local planning port carries the unsaved draft plus aggregate active-habit count, or an existing-habit local ID for Edit. These are local navigation inputs, not an outbound AI payload. Validated typed results use a primitive SavedStateHandle navigation envelope and matching draft token. Wrong-draft, disabled-Coach and malformed results are rejected; no model prose becomes a database write. The actual Coach detour, network payload builders, strategy/action validation and Apply/Undo remain chunks 09–12. Until connected, the form accurately reports that Coach is unavailable and retains the draft.
+
+
+## Home logging and launch integration (chunk 05)
+
+Home quantity entry captures today's date and historical target/unit in an unsaved primitive draft. Save records the exact non-negative decimal amount; Clear removes only that day's record through the same transactional current-date/eligibility checks. Partial progress is not achievement. Failed writes retain the amount for retry, and read failure disables writes while allowing an in-dialog Retry. A changed date, unavailable habit or mismatched expectation blocks the stale draft instead of converting it to a past correction. Closing/Back saves nothing. Repeated in-flight submissions are ignored. No schema/history interpretation changed.
+
+Home's summary counts due active habits for today, with zero-due and all-done separate from empty/loading/error. Best remains all-time, and Weekly streak labels remain occurrence-based. Completion controls are separate from caller-aware detail navigation. The retained main graph anchors tabs to Home after removing Splash/setup; onboarding exits only after the local completion flag succeeds. Unsaved form/planning result contracts remain unchanged. Actual detail content and past corrections are chunk 06; this integration does not enable Coach requests.

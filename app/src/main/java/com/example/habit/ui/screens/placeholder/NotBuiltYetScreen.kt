@@ -22,7 +22,7 @@ import com.example.habit.ui.theme.Spacing
  * nav is fully wired and nothing dead-ends.
  */
 @Composable
-fun NotBuiltYetScreen(tab: HomeTab, onSelectTab: (HomeTab) -> Unit) {
+fun NotBuiltYetScreen(tab: HomeTab, onSelectTab: (HomeTab) -> Unit, titleRes: Int = R.string.not_built_title, body: String? = null) {
     Scaffold(
         containerColor = HabitTheme.colors.surface,
         bottomBar = { BottomNav(selected = tab, onSelect = onSelectTab) },
@@ -36,12 +36,12 @@ fun NotBuiltYetScreen(tab: HomeTab, onSelectTab: (HomeTab) -> Unit) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = stringResource(R.string.not_built_title),
+                    text = stringResource(titleRes),
                     style = HabitTheme.type.titleLg,
                     color = HabitTheme.colors.onSurface,
                 )
                 Text(
-                    text = stringResource(R.string.not_built_body, stringResource(tab.labelRes)),
+                    text = body ?: stringResource(R.string.not_built_body, stringResource(tab.labelRes)),
                     style = HabitTheme.type.body,
                     color = HabitTheme.colors.onSurfaceMuted,
                     textAlign = TextAlign.Center,

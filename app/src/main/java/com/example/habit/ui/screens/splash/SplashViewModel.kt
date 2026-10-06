@@ -3,9 +3,9 @@ package com.example.habit.ui.screens.splash
 import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.habit.data.local.HabitDao
-import com.example.habit.data.prefs.SettingsRepository
 import com.example.habit.ui.containerFactory
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,8 +33,9 @@ sealed interface SplashRoute {
  * at most [MAX_ON_SCREEN_MS] so a slow or broken database never blocks the launch.
  */
 class SplashViewModel(
-    private val settings: SettingsRepository,
-    private val habitDao: HabitDao,
+    private val onboarding: Flow<Boolean>,
+    private val openDatabase: suspend () -> Unit,
+    private val elapsedRealtime: () -> Long = { SystemClock.elapsedRealtime() },
 ) : ViewModel() {
 
     private val _route = MutableStateFlow<SplashRoute?>(null)
@@ -49,7 +50,7 @@ class SplashViewModel(
 
     init {
         viewModelScope.launch {
-            val startedAt = SystemClock.elapsedRealtime()
+            val startedAt = elapsedRealtime()
 
             val loadBarJob = launch {
                 delay(LOAD_BAR_DELAY_MS)
@@ -57,13 +58,14 @@ class SplashViewModel(
             }
 
             val read = withTimeoutOrNull(MAX_ON_SCREEN_MS) {
-                runCatching {
-                    val complete = settings.onboardingComplete.first()
+                try {
+                    val complete = onboarding.first()
                     // Opening the database here is the point: the cost is paid on the
                     // splash rather than on the first frame of Home.
-                    habitDao.count()
-                    complete
-                }
+                    openDatabase()
+                    Result.success(complete)
+                } catch (cancelled: CancellationException) { throw cancelled
+                } catch (error: Exception) { Result.failure(error) }
             }
             loadBarJob.cancel()
 
@@ -72,7 +74,7 @@ class SplashViewModel(
             val onboardingComplete = read?.getOrNull()
             val failed = read == null || read.isFailure
 
-            val elapsed = SystemClock.elapsedRealtime() - startedAt
+            val elapsed = elapsedRealtime() - startedAt
             if (elapsed < MIN_ON_SCREEN_MS) delay(MIN_ON_SCREEN_MS - elapsed)
 
             _route.value = when {
@@ -88,6 +90,6 @@ class SplashViewModel(
         const val MAX_ON_SCREEN_MS = 3000L
         const val LOAD_BAR_DELAY_MS = 400L
 
-        val Factory = containerFactory { SplashViewModel(it.settings, it.habitDao) }
+        val Factory = containerFactory { SplashViewModel(it.settings.onboardingComplete, { it.habitDao.count() }) }
     }
 }

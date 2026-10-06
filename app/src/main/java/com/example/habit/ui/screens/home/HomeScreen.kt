@@ -5,11 +5,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -61,11 +61,14 @@ fun HomeScreen(
         state = state,
         onRetry = viewModel::retry,
         onClearActionError = viewModel::clearActionError,
-        onToggle = viewModel::toggle,
+        onToggle = viewModel::complete,
         onAddHabit = onAddHabit,
         onOpenCoach = onOpenCoach,
         onOpenHabit = { onOpenHabit(it.habit.id) },
         onSelectTab = onSelectTab,
+        onAmount = viewModel::changeAmount,
+        onSaveAmount = viewModel::saveQuantity,
+        onDismissAmount = viewModel::dismissQuantity,
     )
 }
 
@@ -79,6 +82,9 @@ internal fun HomeContent(
     onOpenHabit: (HabitStatus) -> Unit,
     onSelectTab: (HomeTab) -> Unit,
     onClearActionError: () -> Unit = {},
+    onAmount: (String) -> Unit = {},
+    onSaveAmount: (Boolean) -> Unit = {},
+    onDismissAmount: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -113,36 +119,22 @@ internal fun HomeContent(
         containerColor = HabitTheme.colors.surface,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            BottomNav(
-                selected = HomeTab.HOME,
-                enabled = enabledTabs,
-                onSelect = { tab ->
-                    if (tab in enabledTabs) {
-                        onSelectTab(tab)
-                    } else {
-                        // "Disabled tabs show a one-line explanation" (SCR-03 element 7).
-                        scope.launch { snackbarHostState.showSnackbar(tabDisabled) }
+            Column {
+                // Reserve this strip so the specified FAB never covers a row's 48dp action.
+                if (state.allHabits.isNotEmpty()) {
+                    Box(Modifier.fillMaxWidth().padding(Spacing.lg), contentAlignment = Alignment.CenterEnd) {
+                        FloatingActionButton(onClick = onAddHabit, shape = Radius.card,
+                            containerColor = HabitTheme.colors.primary, contentColor = HabitTheme.colors.onPrimary,
+                            elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(defaultElevation = Elevation.fab)) {
+                            Icon(Icons.Filled.Add, stringResource(R.string.home_add_habit))
+                        }
                     }
-                },
-            )
-        },
-        floatingActionButton = {
-            // 12 — only on the populated Home; SCR-03 already has a filled Add button.
-            if (state.allHabits.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = onAddHabit,
-                    shape = Radius.card,
-                    containerColor = HabitTheme.colors.primary,
-                    contentColor = HabitTheme.colors.onPrimary,
-                    elevation = androidx.compose.material3.FloatingActionButtonDefaults
-                        .elevation(defaultElevation = Elevation.fab),
-                    modifier = Modifier.padding(Spacing.lg),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.home_add_habit),
-                    )
                 }
+                BottomNav(selected = HomeTab.HOME, enabled = enabledTabs,
+                    onSelect = { tab ->
+                        if (tab in enabledTabs) onSelectTab(tab)
+                        else scope.launch { snackbarHostState.showSnackbar(tabDisabled) }
+                    })
             }
         },
     ) { innerPadding ->
@@ -156,7 +148,7 @@ internal fun HomeContent(
                         TextButton(onClick = onRetry) { Text(retryLabel) }
                     }
                 } else {
-                    CircularProgressIndicator(color = HabitTheme.colors.primary)
+                    HomeLoading()
                 }
             }
             return@Scaffold
@@ -173,6 +165,7 @@ internal fun HomeContent(
                     today = state.today,
                     onAddHabit = onAddHabit,
                     onOpenCoach = onOpenCoach,
+                    coachEnabled = state.coachEnabled,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
@@ -188,6 +181,11 @@ internal fun HomeContent(
             }
         }
     }
+    state.quantity?.let { entry ->
+        QuantityDialog(entry, canWrite = state.canWrite,
+            onAmount = onAmount, onSave = onSaveAmount, onDismiss = onDismissAmount, onRetry = onRetry)
+    }
+
 }
 
 @Preview(widthDp = 393, heightDp = 832)

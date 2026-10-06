@@ -1,18 +1,17 @@
 package com.example.habit.ui.navigation
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import com.example.habit.ui.components.HomeTab
 import com.example.habit.ui.screens.home.HomeScreen
 import com.example.habit.ui.screens.newhabit.NewHabitScreen
@@ -23,19 +22,35 @@ import com.example.habit.ui.screens.placeholder.NotBuiltYetScreen
 import com.example.habit.ui.screens.splash.SplashScreen
 import com.example.habit.ui.theme.Motion
 
-/**
- * The current graph includes launch, Home and the shared New/Edit form with a retained
- * planning-result port. Other roots remain placeholders. Root anchoring, caller-aware
- * detail routing and destination-specific transitions are scheduled for chunk 05.
- */
 @Composable
-fun HabitNavHost(
-    modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-) {
-    val fade = tween<Float>(durationMillis = Motion.NAV_FADE)
+fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
+    HabitNavigationGraph(navController, modifier,
+        splash = { onboarding, home -> SplashScreen(onboarding, home) },
+        onboarding = { finished -> OnboardingScreen(finished) },
+        home = { add, coach, detail, tab -> HomeScreen(add, coach, detail, tab) },
+        form = { entry, back ->
+            val planningResult by entry.savedStateHandle.getStateFlow<ArrayList<String>?>(PlanningDraftContract.RESULT_KEY, null).collectAsStateWithLifecycle()
+            NewHabitScreen(planningResult = planningResult,
+                onPlanningResultConsumed = { entry.savedStateHandle[PlanningDraftContract.RESULT_KEY] = null },
+                onBack = back, onCreated = back)
+        },
+        root = { tab, select -> if (tab == HomeTab.COACH) CoachRoot(select) else NotBuiltYetScreen(tab, select) },
+        detail = { id, back -> PendingHabitDetail(id, back) },
+    )
+}
 
-    /** Tab switches replace the root rather than stacking it. */
+/** Screen ports let isolated device tests exercise the production graph and Back contracts. */
+@Composable
+internal fun HabitNavigationGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    splash: @Composable (() -> Unit, (Boolean) -> Unit) -> Unit,
+    onboarding: @Composable (() -> Unit) -> Unit,
+    home: @Composable (() -> Unit, () -> Unit, (Long) -> Unit, (HomeTab) -> Unit) -> Unit,
+    form: @Composable (NavBackStackEntry, () -> Unit) -> Unit,
+    root: @Composable (HomeTab, (HomeTab) -> Unit) -> Unit,
+    detail: @Composable (Long, () -> Unit) -> Unit,
+) {
     fun switchTab(tab: HomeTab) {
         val route = when (tab) {
             HomeTab.HOME -> Routes.home()
@@ -44,84 +59,55 @@ fun HabitNavHost(
             HomeTab.PROFILE -> Routes.PROFILE
         }
         navController.navigate(route) {
-            popUpTo(navController.graph.startDestinationId) { saveState = true }
+            // Home is retained after launch destinations are removed, including restored roots.
+            popUpTo(Routes.HOME) { saveState = true }
             launchSingleTop = true
             restoreState = true
         }
     }
-
-    NavHost(
-        navController = navController,
-        startDestination = Routes.SPLASH,
-        modifier = modifier,
-        enterTransition = { fadeIn(fade) },
-        exitTransition = { fadeOut(fade) },
-        popEnterTransition = { fadeIn(fade) },
-        popExitTransition = { fadeOut(fade) },
-    ) {
-        composable(Routes.SPLASH) {
-            SplashScreen(
-                onRouteToOnboarding = {
-                    navController.navigate(Routes.ONBOARDING) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                },
-                onRouteToHome = { dbError ->
-                    navController.navigate(Routes.home(dbError)) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                    }
-                },
-            )
-        }
-
-        composable(Routes.ONBOARDING) {
-            OnboardingScreen(
-                onFinished = {
-                    navController.navigate(Routes.home()) {
-                        popUpTo(Routes.ONBOARDING) { inclusive = true }
-                    }
-                },
-            )
-        }
-
-        composable(
-            route = Routes.HOME,
-            arguments = listOf(
-                navArgument(Routes.ARG_DB_ERROR) {
-                    type = NavType.BoolType
-                    defaultValue = false
-                },
-            ),
-        ) {
-            HomeScreen(
-                onAddHabit = { navController.navigate(Routes.newHabit()) },
-                onOpenCoach = { navController.navigate(Routes.newHabit(planning = true)) },
-                onOpenHabit = { navController.navigate(Routes.COACH) },
-                onSelectTab = ::switchTab,
-            )
-        }
-
-        composable(Routes.NEW_HABIT, arguments = listOf(
-            navArgument(NewHabitViewModel.ARG_HABIT_ID) { type = NavType.LongType; defaultValue = 0L },
-            navArgument(NewHabitViewModel.ARG_PLANNING) { type = NavType.BoolType; defaultValue = false },
-        )) { entry ->
-            val planningResult by entry.savedStateHandle.getStateFlow<ArrayList<String>?>(PlanningDraftContract.RESULT_KEY, null).collectAsStateWithLifecycle()
-            NewHabitScreen(
-                planningResult = planningResult,
-                onPlanningResultConsumed = { entry.savedStateHandle[PlanningDraftContract.RESULT_KEY] = null },
-                onBack = { navController.popBackStack() },
-                onCreated = { navController.popBackStack() },
-            )
-        }
-
-        composable(Routes.PROGRESS) {
-            NotBuiltYetScreen(tab = HomeTab.PROGRESS, onSelectTab = ::switchTab)
-        }
-        composable(Routes.COACH) {
-            NotBuiltYetScreen(tab = HomeTab.COACH, onSelectTab = ::switchTab)
-        }
-        composable(Routes.PROFILE) {
-            NotBuiltYetScreen(tab = HomeTab.PROFILE, onSelectTab = ::switchTab)
+    fun open(route: String) { navController.navigate(route) { launchSingleTop = true } }
+    fun enterMain(dbError: Boolean, launch: String) {
+        navController.navigate(Routes.home(dbError)) { popUpTo(launch) { inclusive = true }; launchSingleTop = true }
+    }
+    NavHost(navController, startDestination = Routes.SPLASH, modifier = modifier,
+        enterTransition = {
+            when {
+                targetState.destination.route == Routes.NEW_HABIT -> slideInHorizontally(tween(250)) { it } + fadeIn(tween(250))
+                targetState.destination.route == Routes.HABIT_DETAIL -> scaleIn(tween(300), initialScale = 0.96f) + fadeIn(tween(300))
+                initialState.destination.route in setOf(Routes.SPLASH, Routes.ONBOARDING) -> fadeIn(tween(200))
+                else -> fadeIn(tween(Motion.NAV_FADE))
+            }
+        }, exitTransition = {
+            fadeOut(tween(if (initialState.destination.route in setOf(Routes.SPLASH, Routes.ONBOARDING)) 200 else Motion.NAV_FADE))
+        }, popEnterTransition = { fadeIn(tween(if (initialState.destination.route == Routes.HABIT_DETAIL) 300 else 250)) },
+        popExitTransition = {
+            when (initialState.destination.route) {
+                Routes.NEW_HABIT -> slideOutHorizontally(tween(250)) { it } + fadeOut(tween(250))
+                Routes.HABIT_DETAIL -> scaleOut(tween(300), targetScale = 0.96f) + fadeOut(tween(300))
+                else -> fadeOut(tween(Motion.NAV_FADE))
+            }
+        }) {
+        composable(Routes.SPLASH) { splash(
+            { navController.navigate(Routes.ONBOARDING) { popUpTo(Routes.SPLASH) { inclusive = true }; launchSingleTop = true } },
+            { enterMain(it, Routes.SPLASH) }) }
+        composable(Routes.ONBOARDING) { onboarding { enterMain(false, Routes.ONBOARDING) } }
+        navigation(startDestination = Routes.HOME, route = Routes.MAIN) {
+            composable(Routes.HOME, arguments = listOf(navArgument(Routes.ARG_DB_ERROR) { type = NavType.BoolType; defaultValue = false })) {
+                home({ open(Routes.newHabit()) }, { open(Routes.newHabit(planning = true)) }, { open(Routes.detail(it)) }, ::switchTab)
+            }
+            composable(Routes.NEW_HABIT, arguments = listOf(
+                navArgument(NewHabitViewModel.ARG_HABIT_ID) { type = NavType.LongType; defaultValue = 0L },
+                navArgument(NewHabitViewModel.ARG_PLANNING) { type = NavType.BoolType; defaultValue = false },
+            )) { entry -> form(entry) { navController.popBackStack() } }
+            composable(Routes.HABIT_DETAIL, arguments = listOf(navArgument(Routes.ARG_HABIT_ID) { type = NavType.LongType })) { entry ->
+                detail(requireNotNull(entry.arguments).getLong(Routes.ARG_HABIT_ID)) { navController.popBackStack() }
+            }
+            listOf(Routes.PROGRESS to HomeTab.PROGRESS, Routes.COACH to HomeTab.COACH, Routes.PROFILE to HomeTab.PROFILE).forEach { (route, tab) ->
+                composable(route) {
+                    BackHandler { switchTab(HomeTab.HOME) }
+                    root(tab, ::switchTab)
+                }
+            }
         }
     }
 }

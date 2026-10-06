@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,6 +56,7 @@ fun EmptyHome(
     onAddHabit: () -> Unit,
     onOpenCoach: () -> Unit,
     modifier: Modifier = Modifier,
+    coachEnabled: Boolean = true,
 ) {
     Column(
         modifier = modifier
@@ -72,7 +74,7 @@ fun EmptyHome(
 
         Spacer(Modifier.height(Spacing.lg))
 
-        CoachShortcut(onOpenCoach = onOpenCoach)
+        if (coachEnabled) CoachShortcut(onOpenCoach = onOpenCoach)
 
         Spacer(Modifier.height(Spacing.xxl))
     }
@@ -150,7 +152,7 @@ private fun CoachShortcut(onOpenCoach: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = Elevation.card),
         modifier = Modifier
             .fillMaxWidth()
-            .height(88.dp)
+            .heightIn(min = 88.dp)
             .border(Elevation.cardOutline, HabitTheme.colors.outline, Radius.card)
             .clickable(onClick = onOpenCoach)
             .semantics { contentDescription = description },
@@ -160,8 +162,8 @@ private fun CoachShortcut(onOpenCoach: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(88.dp)
-                .padding(horizontal = Spacing.lg),
+                .heightIn(min = 88.dp)
+                .padding(Spacing.lg),
         ) {
             Box(
                 contentAlignment = Alignment.Center,

@@ -8,7 +8,6 @@
     <!-- SCR-02 Onboarding -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_continue">Continue</string>
-    <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_restore">Restore a backup</string>
     <string name="onboarding_pane_indicator">Pane %1$d of %2$d</string>
 
@@ -74,7 +73,7 @@
     <string name="home_no_due_today">No habits due today</string>
     <string name="home_not_due_habit">%1$s is not due today</string>
     <string name="home_unmark_habit">Mark %1$s not done for today</string>
-    <string name="home_quantity_habit">Quantity progress for %1$s</string>
+    <string name="home_quantity_habit">Enter or change today’s amount for %1$s</string>
     <string name="frequency_weekly_quota">%1$d completions per week</string>
     <string name="frequency_custom_days">%1$d selected days per week</string>
     <plurals name="streak_occurrences">
@@ -133,4 +132,30 @@
     <string name="form_reload_title">Reload this habit?</string>
     <string name="form_reload_body">Your unsaved changes will be replaced with the latest saved values.</string>
     <string name="form_reload">Reload</string>
+    <plurals name="home_left_today">
+        <item quantity="one">%1$d habit left today</item>
+        <item quantity="other">%1$d habits left today</item>
+    </plurals>
+    <string name="home_loading">Loading your habits</string>
+    <string name="quantity_title">Today’s amount</string>
+    <string name="quantity_target">Target: %1$s %2$s</string>
+    <string name="quantity_input">Amount</string>
+    <string name="quantity_save">Save amount</string>
+    <string name="quantity_clear">Clear amount</string>
+    <string name="quantity_cancel">Cancel</string>
+    <string name="quantity_invalid">Enter a non-negative decimal amount.</string>
+    <string name="quantity_failed">Could not save. Your amount is kept; try again.</string>
+    <string name="quantity_stale">This day or habit changed. Close and reopen the amount entry.</string>
+    <string name="onboarding_save_error">Could not finish setup. Please try again.</string>
+    <string name="detail_pending">Habit detail is scheduled for the next implementation chunk.</string>
+    <string name="detail_title">Habit detail</string>
+    <string name="navigation_back">Back</string>
+    <string name="coach_disabled_title">Coach is disabled</string>
+    <string name="coach_disabled_body">Enable Coach suggestions in Profile to use the Coach. Your local habits and history remain available.</string>
+    <string name="onboarding_demo_title">Read 20 pages</string>
+    <string name="onboarding_demo_streak">12 day streak</string>
+    <string name="quantity_partial_state">%1$s of %2$s %3$s; target not yet reached</string>
+    <string name="quantity_achieved_state">%1$s of %2$s %3$s; target reached</string>
+    <string name="home_weekly_met">Weekly quota met</string>
+    <string name="home_row_not_due">Not due today</string>
 </resources>

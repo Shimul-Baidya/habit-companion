@@ -5,7 +5,14 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -69,12 +75,15 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { OnboardingPanes.size })
     val scope = rememberCoroutineScope()
 
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.finished) { if (state.finished) onFinished() }
     OnboardingContent(
+        state = state,
         pagerState = pagerState,
-        onSkip = { viewModel.finishOnboarding(onFinished) },
+        onSkip = { viewModel.finishOnboarding() },
         onContinue = {
             if (pagerState.currentPage == OnboardingPanes.lastIndex) {
-                viewModel.finishOnboarding(onFinished)
+                viewModel.finishOnboarding()
             } else {
                 scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
             }
@@ -83,16 +92,17 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun OnboardingContent(
+internal fun OnboardingContent(
     pagerState: PagerState,
     onSkip: () -> Unit,
     onContinue: () -> Unit,
+    state: OnboardingState = OnboardingState(),
 ) {
     val scope = rememberCoroutineScope()
 
     // 9 — panes 2 and 3 step back; pane 1 is not intercepted, so back exits the app.
-    BackHandler(enabled = pagerState.currentPage > 0) {
-        scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+    BackHandler(enabled = pagerState.currentPage > 0 || state.saving) {
+        if (!state.saving) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
     }
 
     Surface(color = HabitTheme.colors.surface, modifier = Modifier.fillMaxSize()) {
@@ -107,6 +117,7 @@ private fun OnboardingContent(
             ) {
                 TextButton(
                     onClick = onSkip,
+                    enabled = !state.saving,
                     modifier = Modifier.height(Sizes.touchTarget),
                 ) {
                     Text(
@@ -125,6 +136,9 @@ private fun OnboardingContent(
                 OnboardingPaneContent(page = page)
             }
 
+            if (state.failed) Text(stringResource(R.string.onboarding_save_error), color = HabitTheme.colors.danger,
+                modifier = Modifier.padding(horizontal = Spacing.gutter))
+
             // 5 — pager dots.
             PagerDots(
                 pageCount = OnboardingPanes.size,
@@ -136,13 +150,8 @@ private fun OnboardingContent(
 
             // 6 — Continue (C-08).
             PrimaryButton(
-                text = stringResource(
-                    if (pagerState.currentPage == OnboardingPanes.lastIndex) {
-                        R.string.onboarding_get_started
-                    } else {
-                        R.string.onboarding_continue
-                    },
-                ),
+                text = stringResource(if (state.saving) R.string.form_saving else R.string.onboarding_continue),
+                enabled = !state.saving,
                 onClick = onContinue,
                 modifier = Modifier.padding(horizontal = Spacing.gutter),
             )
@@ -174,7 +183,7 @@ private fun OnboardingPaneContent(page: Int) {
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxSize().padding(horizontal = Spacing.gutter),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.gutter),
     ) {
         // 2 — illustration.
         StackedCardIllustration(
@@ -198,8 +207,7 @@ private fun OnboardingPaneContent(page: Int) {
             text = stringResource(pane.bodyRes),
             style = HabitTheme.type.body.copy(lineHeight = 24.sp),
             color = HabitTheme.colors.onSurfaceMuted,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
+
         )
     }
 }
@@ -259,10 +267,12 @@ private fun StackCard(
             .clip(Radius.card)
             .background(HabitTheme.colors.surfaceCard)
             .border(1.dp, HabitTheme.colors.outline, Radius.card)
-            .padding(horizontal = Spacing.lg),
+            .padding(horizontal = Spacing.lg)
+            .clearAndSetSemantics {},
     ) {
         // A completion ring, filled on the front card — the tap the app is about.
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
@@ -273,17 +283,20 @@ private fun StackCard(
                         Modifier.border(4.dp, HabitTheme.colors.surfaceSunken, CircleShape)
                     },
                 ),
-        )
+        ) { if (filled) Icon(Icons.Filled.Check, null, tint = HabitTheme.colors.onPrimary) }
         Spacer(Modifier.width(Spacing.lg))
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            Box(
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs), modifier = Modifier.weight(1f)) {
+            if (filled) {
+                Text(stringResource(R.string.onboarding_demo_title), style = HabitTheme.type.body, color = HabitTheme.colors.onSurface)
+                Text(stringResource(R.string.onboarding_demo_streak), style = HabitTheme.type.label, color = HabitTheme.colors.primary)
+            } else Box(
                 Modifier
                     .height(12.dp)
                     .width(if (filled) 132.dp else 108.dp)
                     .clip(Radius.pill)
                     .background(HabitTheme.colors.onSurface.copy(alpha = 0.18f)),
             )
-            Box(
+            if (!filled) Box(
                 Modifier
                     .height(10.dp)
                     .width(72.dp)
