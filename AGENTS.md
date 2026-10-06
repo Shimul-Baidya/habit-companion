@@ -6,7 +6,7 @@ These instructions apply throughout this project. Read this file before working 
 
 Implementation is now authorised one chunk at a time. Complete the requested chunk, verify each logical step, and update the handoff. End with a one-line commit message, a brief proposal for the next chunk, and a request for permission to proceed. The owner performs Git operations; do not commit, stage or push on their behalf. When command execution needs permission, include the exact command and its purpose in the approval request.
 
-Read `IMPLEMENTATION_PLAN.md` for chunk order, dependencies, acceptance criteria and progress. Read `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` for source analysis and screen details, recognising that its earlier proposals are subordinate to the final decisions here. Keep this file for standing rules and the plan for execution status; do not duplicate the whole review in every handoff.
+Read `HANDOFF.md` for the latest verified implementation state and the next authorised scope, especially after compaction or when starting a new chat. Read `DOMAIN_BEHAVIOR.md` before changing persistence or calculations. Read `IMPLEMENTATION_PLAN.md` for chunk order, dependencies, acceptance criteria and progress. Read `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` for source analysis and screen details, recognising that its earlier proposals are subordinate to the final decisions here. Keep this file for standing rules and the plan for execution status; do not duplicate the whole review in every handoff.
 
 ## Requirements hierarchy
 

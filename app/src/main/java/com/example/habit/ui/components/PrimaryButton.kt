@@ -1,7 +1,7 @@
 package com.example.habit.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -37,7 +37,7 @@ fun PrimaryButton(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .height(Sizes.primaryButtonHeight),
+            .heightIn(min = Sizes.primaryButtonHeight),
     ) {
         Text(text = text, style = HabitTheme.type.title)
     }

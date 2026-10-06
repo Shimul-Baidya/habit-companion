@@ -85,3 +85,12 @@ val DarkHabitColors = HabitColors(
 const val ScrimAlpha = 0.55f
 
 val LocalHabitColors = staticCompositionLocalOf { LightHabitColors }
+
+/** SCR-05 supplied blue/pulse/book/leaf/focus swatches, also reusable by habit rows. */
+fun HabitColors.habitAccent(key: String): Color = when (key) {
+    "blue" -> if (isDark) Color(0xFF71B6EE) else Color(0xFF428AC9)
+    "purple" -> if (isDark) Color(0xFFA398FF) else Color(0xFF7165DC)
+    "green" -> if (isDark) Color(0xFF6BCD9A) else Color(0xFF3B9E6E)
+    "orange" -> if (isDark) Color(0xFFF6BA62) else Color(0xFFE18B14)
+    else -> primary
+}

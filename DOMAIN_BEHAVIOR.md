@@ -1,6 +1,6 @@
 # Habit Companion historical domain contract
 
-Chunk 01 contract, 6 October 2026, extended by chunks 02–03 persistence and shared statistics. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
+Chunk 01 contract, 6 October 2026, extended by chunks 02–04 persistence, shared statistics and form integration. The owner approved the Weekly proposal during implementation. This document records that decision for persistence and screen integration; it does not replace the supplied design. The new pure domain types have v2 storage; shared screen calculations are integrated in chunk 03.
 
 ## Dates and historical settings
 
@@ -40,7 +40,7 @@ Consistency is completed required occurrences divided by all eligible required o
 
 ## Integration limits
 
-Chunk 03 removes the legacy `StreakCalculator` and its 400-day repository window. Home and future detail/Progress/Profile consumers use `HabitSnapshot`/`StatsAggregator` over atomic complete Room history. The old form/toggle path now writes through the transactional history repository, preventing habits without initial dated settings. New schedules use this approved contract.
+Chunk 03 removes the legacy `StreakCalculator` and its 400-day repository window. Home and future detail/Progress/Profile consumers use `HabitSnapshot`/`StatsAggregator` over atomic complete Room history. New/Edit and completion writes use the transactional history repository, preventing habits without initial dated settings. New schedules use this approved contract.
 
 Chunk 02 retains the database name `habitflow.db`, original v1 columns and original timestamps. Migration freezes creation/archive local dates using the device zone in which v1 would have resolved them. v1 has no original creation-zone metadata, so earlier travel/time-zone context cannot be reconstructed. v1 Weekly masks become historical Custom eligibility, with original frequency/mask metadata retained. v1 Daily masks that differed from all seven days also retain their actual old mask semantics. Legacy goal/count are not quantities: row presence remains binary completion. Invalid legacy masks or impossible dates are preserved as raw records and produce validation errors rather than being guessed, deleted or silently treated as an empty database.
 
@@ -56,3 +56,16 @@ Weekly successes appear on their achieved dates, closed shortfalls on Sunday, an
 `DeviceClock` reads the current device zone. `DateMonitor` publishes each local midnight (including 23/25-hour daylight-saving days), and Activity resume/date/time/time-zone broadcasts refresh and rearm it. Today's write rechecks the date transactionally, so a midnight race cannot silently become a past correction. Intentional past corrections use a separate operation. If the clock/zone moves backward, statistics query facts as of the displayed date, preserving later already-stored records for when that date returns; new future writes remain forbidden. This is a display/evaluation accommodation, not a rewrite of history.
 
 Home retains prior successful data after a read failure, disables stale completion writes, and exposes Retry in place. Loading, genuine empty, no-due, all-done, read failure and write failure remain distinct. A read failure never manufactures empty habits, and a write failure never claims successful completion. Later chunks reuse these facts and build their own screen-specific loading/error presentation.
+
+
+## New/Edit and draft contract (chunk 04)
+
+New/Edit shares one form. Entering it, opening Coach, ordinary Back or discarding a draft never creates a habit. Names are trimmed. A trimmed, case-insensitive match against another active habit produces a warning and explicit duplicate-name confirmation rather than silently renaming or forbidding the habit. Archived names do not block creation. The final duplicate check runs inside the save transaction so a concurrent insertion cannot bypass confirmation.
+
+The form supports Daily, Weekly quota 1–7 and Custom with at least one selected weekday. Binary is the recommended default. Quantity requires a positive plain decimal target and a nonblank unit up to 40 characters; comma decimal input is normalised, and comparison of equivalent targets such as 5 and 5.0 does not create a new expectation revision. Existing unknown/legacy appearance keys are preserved unless the user chooses a supplied appearance.
+
+Edit loads the latest independently stored schedule and tracking settings, including pending future changes. Saving retains the habit ID and all completion history. Metadata changes immediately; expectation changes use the approved effective-date rules above. All writes, including metadata and expectation changes, commit or roll back together. Fields unchanged in the form merge from the latest stored values, preserving unrelated cue/reminder/completion edits. A competing change to a field edited in the form produces an explicit conflict; Reload requires confirmation before replacing the draft. Archived or deleted habits cannot be resurrected by a stale form.
+
+SavedStateHandle stores primitive draft fields, the initial edit snapshot, a draft token and successful save ID. Repeated submits are guarded before launching the write; recreation after reported success cannot insert a second habit. This is saved UI state, not a permanent draft database. Bundle/Parcel restoration is verified; arbitrary OS termination during a database commit has not been simulated and is not claimed to provide an exactly-once cross-process transaction guarantee.
+
+The local planning port carries the unsaved draft plus aggregate active-habit count, or an existing-habit local ID for Edit. These are local navigation inputs, not an outbound AI payload. Validated typed results use a primitive SavedStateHandle navigation envelope and matching draft token. Wrong-draft, disabled-Coach and malformed results are rejected; no model prose becomes a database write. The actual Coach detour, network payload builders, strategy/action validation and Apply/Undo remain chunks 09–12. Until connected, the form accurately reports that Coach is unavailable and retains the draft.

@@ -67,9 +67,8 @@
 
     <!-- SCR-05 stub -->
     <string name="new_habit_title">New habit</string>
-    <string name="new_habit_name_label">Habit name</string>
+    <string name="new_habit_name_label">Name</string>
     <string name="new_habit_create">Create habit</string>
-    <string name="new_habit_stub_note">Stub for SCR-05. Icon, colour, frequency and the Coach card are specified on slide 12 and are not built yet.</string>
     <string name="back">Back</string>
     <string name="home_write_error">Could not save your completion. Please try again.</string>
     <string name="home_no_due_today">No habits due today</string>
@@ -82,4 +81,56 @@
         <item quantity="one">%d completion streak</item>
         <item quantity="other">%d completion streak</item>
     </plurals>
+    <string name="form_edit_title">Edit habit</string>
+    <string name="form_name_accessibility">Habit name</string>
+    <string name="form_name_required">Enter a habit name.</string>
+    <string name="form_appearance">Icon &amp; colour</string>
+    <string name="habit_appearance_mindful">Blue mindfulness icon</string>
+    <string name="habit_appearance_activity">Teal activity icon</string>
+    <string name="habit_appearance_reading">Purple reading icon</string>
+    <string name="habit_appearance_growth">Green growth icon</string>
+    <string name="habit_appearance_focus">Orange focus icon</string>
+    <string name="habit_appearance_current">Current icon and colour</string>
+    <string name="form_frequency">How often</string>
+    <string name="form_daily">Daily</string>
+    <string name="form_weekly">Weekly</string>
+    <string name="form_custom">Custom</string>
+    <string name="form_weekly_quota">Completions per week</string>
+    <string name="form_weekly_help">Choose 1–7 completions on distinct days, Monday–Sunday.</string>
+    <string name="form_quota_error">Choose a whole number from 1 to 7.</string>
+    <string name="form_days_error">Select at least one weekday.</string>
+    <string name="form_tracking">Tracking</string>
+    <string name="form_binary">Done / not done</string>
+    <string name="form_quantity">Quantity</string>
+    <string name="form_binary_help">Recommended: one completion when you finish the habit.</string>
+    <string name="form_quantity_help">Record an amount against a target and unit.</string>
+    <string name="form_target">Target amount</string>
+    <string name="form_unit">Unit</string>
+    <string name="form_unit_accessibility">Unit (for example, pages or minutes)</string>
+    <string name="form_unit_example">pages or minutes</string>
+    <string name="form_target_error">Enter a positive amount.</string>
+    <string name="form_unit_error">Enter a unit of up to 40 characters.</string>
+    <string name="form_history_help">Past records keep their original settings. Tracking and targets change tomorrow. Schedules change tomorrow, or next Monday when changing to or from Weekly.</string>
+    <string name="form_coach_title">Not sure how to make this stick?</string>
+    <string name="form_coach_body">The Coach will size it and anchor it to your day.</string>
+    <string name="form_coach_not_connected">Coach is not connected yet. Your draft stays here.</string>
+    <string name="form_coach_disabled">Coach is disabled in settings. Your draft stays here.</string>
+    <string name="form_save">Save changes</string>
+    <string name="form_saving">Saving…</string>
+    <string name="form_save_failed">Could not save. Your changes are kept; please try again.</string>
+    <string name="form_save_conflict">This habit changed while you were editing. Reload it to review the latest values.</string>
+    <string name="form_load_failed">Could not load habits. Your draft is kept.</string>
+    <string name="form_unavailable">This habit was deleted or archived and cannot be edited.</string>
+    <string name="form_duplicate_warning">An active habit already has this name. You can confirm to use it again.</string>
+    <string name="form_duplicate_title">Use this name again?</string>
+    <string name="form_duplicate_body">Another active habit has this name. Both will keep their own history.</string>
+    <string name="form_create_anyway">Create anyway</string>
+    <string name="form_save_anyway">Save anyway</string>
+    <string name="form_discard_title">Discard changes?</string>
+    <string name="form_discard_body">Your unsaved changes will be discarded.</string>
+    <string name="form_discard">Discard</string>
+    <string name="form_keep_editing">Keep editing</string>
+    <string name="form_reload_title">Reload this habit?</string>
+    <string name="form_reload_body">Your unsaved changes will be replaced with the latest saved values.</string>
+    <string name="form_reload">Reload</string>
 </resources>

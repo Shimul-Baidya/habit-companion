@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 interface HabitHistoryDao {
     @Transaction @Query("SELECT * FROM habits ORDER BY created_at, id")
     fun observeRecords(): Flow<List<HabitRecord>>
+    @Transaction @Query("SELECT * FROM habits ORDER BY created_at, id")
+    suspend fun records(): List<HabitRecord>
     @Transaction @Query("SELECT * FROM habits WHERE id = :id")
     suspend fun record(id: Long): HabitRecord?
     @Upsert suspend fun putSchedule(value: ScheduleHistoryEntity)

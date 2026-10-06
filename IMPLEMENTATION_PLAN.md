@@ -4,13 +4,13 @@ Created 6 October 2026 from the owner's final instructions and the current proje
 
 Read `AGENTS.md` first. It records authoritative product decisions and continuing engineering constraints. `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` remains useful for source locations and original screen details, but conflicting earlier proposals are superseded.
 
-## 1. Current baseline and planning assumptions
+## 1. Original planning baseline and assumptions
 
-The project already has Compose foundations, Splash, three-pane onboarding, empty/populated Home, a name-only create stub, Room schema v1 for habits/completions, DataStore for onboarding/name/theme, pure streak functions and manual dependency wiring. Detail, management, Coach, Progress and Profile remain incomplete or placeholders. The known routing, midnight, error/empty, accessibility and 400-day-limit issues still apply.
+At planning time, the project had Compose foundations, Splash, three-pane onboarding, empty/populated Home, a name-only create stub, Room schema v1 for habits/completions, DataStore for onboarding/name/theme, pure streak functions and manual dependency wiring. Detail, management, Coach, Progress and Profile remain incomplete or placeholders. The known routing, midnight, error/empty, accessibility and 400-day-limit issues still apply.
 
 `resources/coach_cards.json` is present and was parsed during planning: **60 cards, 60 unique IDs**, each with `id`, `title`, `principle`, `action`, `use_when`, `tags`, `source`. The source is supplied content, not an executable action schema. Keep the entire library and attribution. No additional library is required.
 
-Current manifest enables backup with template XML rules; privacy configuration must be corrected during implementation. No AI endpoint/provider/authentication configuration was found. Existing example tests do not verify habit behaviour. No compilation or device test was performed during this planning request.
+At planning time, the manifest enabled backup with template XML rules; privacy configuration must be corrected during implementation. No AI endpoint/provider/authentication configuration was found. Existing example tests do not verify habit behaviour. No compilation or device test was performed during this planning request.
 
 ### Approved decisions that supersede the old review
 
@@ -59,7 +59,7 @@ Provider, endpoint/model, credential provisioning and provider-specific retentio
 | 01 | Historical domain contracts and pure behaviour | Weekly checkpoint approved | Complete |
 | 02 | Versioned persistence and safe migration | 01 | Complete |
 | 03 | Shared calculations, date refresh and observable state | 01–02 | Complete |
-| 04 | Complete New/Edit Habit and retained drafts | 01–03 | Not started |
+| 04 | Complete New/Edit Habit and retained drafts | 01–03 | Complete |
 | 05 | Faithful Home, launch and main navigation | 03–04 | Not started |
 | 06 | Detail, corrections and management sheet | 03–05 | Not started |
 | 07 | Progress and Profile preferences | 03, 05–06 | Not started |
@@ -262,7 +262,7 @@ For each check record whether it was executed, passed/failed, and its practical 
 
 ## 8. Progress and handoff record
 
-Current status: **chunks 01–03 complete and verified; awaiting owner approval for chunk 04**. Chunks 04–13 remain not started. Chunk 02 was explicitly authorised by the owner, including fixing the app's visible name.
+Current status: **chunks 01–04 complete and verified; awaiting owner approval for chunk 05**. Chunks 05–13 remain not started. Chunk 02 was explicitly authorised by the owner, including fixing the app's visible name.
 
 Append one concise entry per completed or paused implementation chunk using:
 
@@ -309,3 +309,15 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - **Remaining scope/limits:** shared inputs are ready for detail/Progress/Profile; those screens, saved theme UI, full navigation and complete Home composition belong to later chunks. Quantity amount input on Home belongs to chunk 05 and detail/corrections to chunk 06; this chunk supplies correct quantity facts and prevents binary writes to quantity habits. Midnight/resume/time-zone behavior was tested with controlled clocks rather than changing the owner's phone settings. UI tests cover the affected state/semantics, not complete mockup fidelity, large text, keyboard/insets or every Back flow. Gemini Flash free API tier preference is recorded in `AGENTS.md`; no credentials, external Coach request or live model test was added. Exact integration and applicable free-tier terms remain chunk 12 work.
 - **Next:** chunk 04, faithful shared New/Edit form with Daily/Weekly quota/Custom controls, binary/quantity target/unit fields, retained draft and planning-detour contract, validation, loading/error and duplicate-submit guards, dirty Back confirmation, recreation and historical edits. Obtain owner approval first.
 - **Suggested one-line commit:** `feat: unify historical habit statistics and refresh Home state safely`
+
+
+### Chunk 04 — Complete, 6 October 2026
+
+- **Implemented:** shared New/Edit form matching SCR-05's header/name/appearance/frequency/Coach/docked-action hierarchy, five supplied icon/colour choices and retained legacy appearance. Daily, Weekly quota and Custom are distinct; binary is recommended/default, with conditional quantity target/unit fields. Validation, dirty Back confirmation, active duplicate-name warning/confirmation, saving/error/retry and repeated-submit protection are wired to real local persistence. Edit retains the ID and previous completions, loads independently pending schedule/tracking settings and uses the approved historical effective dates. Atomic saves merge unrelated later changes and reject conflicting same-field changes without partial writes. No dependency, schema or original resource change.
+- **Draft/navigation contract:** primitive SavedStateHandle fields retain the draft and successful save ID; a stable draft token scopes typed planning results. Shared route helpers carry optional habitId/planning flags. Empty-Home planning enters the unsaved creation flow; a validated primitive result returns to the same form through its back-stack SavedStateHandle. The actual Coach destination remains chunk 11; today's card reports that it is not connected and keeps the draft. The local context is not an external payload. Edit's management entry remains chunk 06.
+- **Minimum adaptations:** approved tracking/quota controls require scrolling within the original form hierarchy; the Coach card stays before the docked Create/Save button. Visual weekday circles remain 40dp inside separate 48dp checkbox targets; small widths permit horizontal scrolling. Heading/button heights grow only when text needs more room, and IME/navigation insets keep focused input and Save accessible. Minor duplicate-name ambiguity is resolved as warning plus explicit confirmation, with an atomic final check; names are not unique database identities. Documented in `DOMAIN_BEHAVIOR.md`.
+- **Checks actually run:** compilation and successive unit/device suites passed at logical integration steps. The first screenshot-only failure was an unavailable test-APK cache directory, fixed by using a dedicated target-app QA cache directory; no database/preferences were cleared. Reference capture was explicitly switched to light theme and keyboard visibility asserted rather than inferred. Final `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:connectedDebugAndroidTest :app:lintDebug` passed with **81 JVM tests and 44 Pixel 7 (Android 17) device tests, zero failures/errors/skips**. Lint has **zero errors and 24 existing advisories**. Final cold launch returned `Status: ok`. Tests retain installed APKs and use isolated databases/preferences. No Git mutation was performed; current staging remains the owner's responsibility.
+- **New coverage:** both modes/all schedules; invalid quota/decimal/unit/custom selection; trimmed/case-insensitive duplicates and insertion races; repeated/failed saves; dirty Back; wrong-draft/disabled-Coach/invalid typed results; successful navigation detour without insertion; primitive Bundle/Parcel restoration through a real Room-backed ViewModel; edit ID/history/effective settings; independent pending edits; numeric target equality; SQL-trigger rollback; stale same-field conflicts; unrelated reminder/cue/completion preservation; deleted/archived stale forms; duplicate confirmation and Edit Save UI. Existing migration, DataStore, date, statistics and Home regression tests also passed.
+- **Visual evidence/limits:** inspected rendered light 393 × 832dp and dark 360 × 640dp/font scale 1.5 form fixtures with the keyboard visible, plus scrolled Coach card. Root captures exclude the native keyboard, while the test asserts its inset/visibility. These checks are not a claim that all app screens are complete or every OS process-death point is tested. Actual OS kill during save was not simulated. Production Home quantity input, full navigation, detail/management, theme preference wiring and live Coach remain their planned later chunks. `HANDOFF.md` records the concise current state and next-chunk startup instructions.
+- **Next:** chunk 05, faithful empty/populated Home and launch/main navigation, compact quantity input, correct detail route contract, tab state preservation, removed launch destinations and specified transitions. Verify first/subsequent launch, Back, binary/quantity logging, state/error paths and Home/onboarding light/dark responsiveness. Obtain owner approval before starting.
+- **Suggested one-line commit:** `feat: complete habit forms with retained drafts and historical edits`

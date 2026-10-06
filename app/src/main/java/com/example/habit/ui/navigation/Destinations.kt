@@ -1,8 +1,8 @@
 package com.example.habit.ui.navigation
 
 /**
- * Screen IDs are permanent: these route names map one-to-one onto SCR-01 … SCR-15 and are
- * reused unchanged in Document 2, the UI Flow.
+ * Destinations group shared screen states from SCR-01 … SCR-15; New/Edit uses one form.
+ * Follow the UI Flow for caller-aware navigation rather than creating a route for each state.
  */
 object Routes {
     /** SCR-01 */
@@ -20,8 +20,10 @@ object Routes {
      */
     const val HOME = "home?$ARG_DB_ERROR={$ARG_DB_ERROR}"
 
-    /** SCR-05 — currently a stub that collects a name only. */
-    const val NEW_HABIT = "new-habit"
+    /** SCR-05 — shared form; no permanent habit is created for a planning draft. */
+    const val NEW_HABIT = "new-habit?habitId={habitId}&planning={planning}"
+    fun newHabit(planning: Boolean = false) = "new-habit?habitId=0&planning=$planning"
+    fun editHabit(id: Long): String { require(id > 0); return "new-habit?habitId=$id&planning=false" }
 
     /** SCR-12 / SCR-13, SCR-09, SCR-15 — nav roots, not built in this phase. */
     const val PROGRESS = "progress"
@@ -29,8 +31,8 @@ object Routes {
     const val PROFILE = "profile"
 
     /**
-     * SCR-01 failure path: Room threw, so Home opens empty and surfaces a retry rather
-     * than the splash blocking on it.
+     * SCR-01 failure path: Room threw, so Home surfaces a read error with Retry rather
+     * than manufacturing empty data or keeping Splash blocked.
      */
     fun home(dbError: Boolean = false) = "home?$ARG_DB_ERROR=$dbError"
 }

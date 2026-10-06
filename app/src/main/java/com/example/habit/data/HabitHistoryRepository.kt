@@ -14,6 +14,9 @@ data class HabitDraft(
     val settings: HabitSettings = HabitSettings(HabitSchedule.Daily),
     val iconKey: String = "default",
     val colorKey: String = "primary",
+    val cue: String = "",
+    val anchor: String = "",
+    val planNote: String = "",
 )
 data class HabitMetadata(
     val name: String, val iconKey: String, val colorKey: String,
@@ -28,11 +31,11 @@ data class HabitMetadata(
 data class ArchiveChange(val habitId: Long, val archivedAt: Long)
 
 /** All related writes are atomic; the clock is injected for reproducible date guards. */
-class HabitHistoryRepository(private val database: HabitDatabase, private val clock: Clock) {
+class HabitHistoryRepository(private val database: HabitDatabase, private val clock: Clock) : HabitFormDataSource {
     private val habits = database.habitDao()
     private val historyDao = database.historyDao()
     private val completions = database.completionDao()
-    val records: Flow<List<HabitRecord>> = historyDao.observeRecords()
+    override val records: Flow<List<HabitRecord>> = historyDao.observeRecords()
     private fun today() = LocalDate.now(clock)
     suspend fun record(id: Long): HabitRecord? = historyDao.record(id)
 
@@ -40,7 +43,49 @@ class HabitHistoryRepository(private val database: HabitDatabase, private val cl
         require(draft.name.trim().isNotEmpty() && draft.iconKey.isNotBlank() && draft.colorKey.isNotBlank())
         val at = clock.instant()
         insert(HabitEntity(name = draft.name.trim(), iconKey = draft.iconKey, colorKey = draft.colorKey,
-            createdAt = at.toEpochMilli(), createdEpochDay = at.atZone(clock.zone).toLocalDate().toEpochDay()), draft.settings)
+            createdAt = at.toEpochMilli(), createdEpochDay = at.atZone(clock.zone).toLocalDate().toEpochDay(),
+            cue = draft.cue, anchor = draft.anchor, planNote = draft.planNote), draft.settings)
+    }
+
+    override suspend fun saveForm(id: Long?, draft: HabitDraft, original: HabitDraft?, allowDuplicate: Boolean): Long = database.withTransaction {
+        val name = draft.name.trim()
+        require(name.isNotEmpty() && draft.iconKey.isNotBlank() && draft.colorKey.isNotBlank())
+        val all = historyDao.records()
+        fun checkName(value: String) {
+            if (!allowDuplicate && all.any { it.habit.id != id && it.habit.archivedAt == null && it.habit.name.trim().equals(value, ignoreCase = true) })
+                throw DuplicateHabitName()
+        }
+        if (id == null) { checkName(name); return@withTransaction create(draft.copy(name = name)) }
+        val record = requireNotNull(all.singleOrNull { it.habit.id == id }) { "Habit no longer exists" }
+        require(record.habit.archivedAt == null) { "Archived habit cannot be edited" }
+        val before = requireNotNull(original)
+        val latest = record.editableDraft()
+        // Merge unchanged fields from the latest row; reject collisions on fields edited here.
+        fun <T> field(old: T, requested: T, stored: T): T {
+            if (requested == old) return stored
+            if (stored != old && stored != requested) throw HabitFormConflict()
+            return requested
+        }
+        val merged = draft.copy(name = field(before.name, name, latest.name),
+            iconKey = field(before.iconKey, draft.iconKey, latest.iconKey),
+            colorKey = field(before.colorKey, draft.colorKey, latest.colorKey),
+            cue = field(before.cue, draft.cue, latest.cue), anchor = field(before.anchor, draft.anchor, latest.anchor),
+            planNote = field(before.planNote, draft.planNote, latest.planNote))
+        val schedule = field(before.settings.schedule, draft.settings.schedule, latest.settings.schedule)
+        val tracking = if (sameTracking(before.settings.tracking, draft.settings.tracking)) latest.settings.tracking else {
+            if (!sameTracking(latest.settings.tracking, before.settings.tracking) && !sameTracking(latest.settings.tracking, draft.settings.tracking))
+                throw HabitFormConflict()
+            draft.settings.tracking
+        }
+        checkName(merged.name)
+        updateMetadata(id, HabitMetadata(merged.name, merged.iconKey, merged.colorKey, merged.cue, merged.anchor, merged.planNote,
+            record.habit.reminderEnabled, record.habit.reminderMinute))
+        val changes = buildList {
+            if (schedule != latest.settings.schedule) add(HabitSettingChange.Schedule(schedule))
+            if (!sameTracking(tracking, latest.settings.tracking)) add(HabitSettingChange.Tracking(tracking))
+        }
+        if (changes.isNotEmpty()) changeSettings(id, changes)
+        id
     }
 
     /** Compatibility bridge for the existing name-only binary form. */
