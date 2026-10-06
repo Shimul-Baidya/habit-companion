@@ -12,21 +12,24 @@ import kotlinx.coroutines.flow.*
 data class ManagementState(val id: Long? = null, val record: EvaluatedRecord? = null,
     val readable: Boolean = false, val busy: Boolean = false, val deleteConfirmation: Boolean = false,
     val reminder: Boolean = false, val error: String? = null, val undo: ArchiveChange? = null,
-    val removed: Long? = null)
+    val removed: Long? = null, val globalReminderEnabled: Boolean = false, val globalReminderMinute: Int = 1200, val reminderAvailability: String? = null)
 /** Lives above destinations so archive Undo remains available after detail returns to its caller. */
 class HabitManagementViewModel(private val source: HabitDataSource, private val operations: HabitOperations,
     private val prefs: Flow<SettingsRepository.Configuration>, private val dates: DateProvider,
-    private val saved: SavedStateHandle, private val now: () -> Long = System::currentTimeMillis) : ViewModel() {
+    private val saved: SavedStateHandle, private val changeReminder: suspend (Long, Boolean?, Int?, Boolean?, Int?) -> Unit = { _, _, _, _, _ -> error("Reminder writer unavailable") },
+    private val reminderStatus: Flow<String> = flowOf("Android may delay reminders, especially during battery saving."),
+    private val now: () -> Long = System::currentTimeMillis) : ViewModel() {
     private val attempts = MutableStateFlow(0)
     private val mutable = MutableStateFlow(ManagementState(id = saved["manageId"], deleteConfirmation = saved["manageDelete"] ?: false,
         reminder = saved["manageReminder"] ?: false, undo = saved.get<Long>("undoHabit")?.let { ArchiveChange(it, requireNotNull(saved["undoAt"])) }))
     val state = mutable.asStateFlow()
     private var snapshot: HabitSnapshot? = null
     init {
+        viewModelScope.launch { reminderStatus.collect { status -> mutable.update { it.copy(reminderAvailability = status) } } }
         viewModelScope.launch { attempts.collectLatest {
             mutable.update { it.copy(readable = false) }
             try { combine(dates.dates, prefs) { date, config -> date to config }.collectLatest { (date, config) ->
-                mutable.update { it.copy(readable = false) }
+                mutable.update { it.copy(readable = false, globalReminderEnabled = config.reminderEnabled, globalReminderMinute = config.reminderMinute) }
                 source.observeSnapshot(date, config.weekStart).collect { snap ->
                     snapshot = snap
                     val record = snap.records.singleOrNull { it.record.habit.id == state.value.id && it.record.habit.archivedAt == null && it.evaluation.settingsToday != null }
@@ -50,6 +53,17 @@ class HabitManagementViewModel(private val source: HabitDataSource, private val 
         mutable.update { it.copy(id = null, record = null, deleteConfirmation = false, reminder = false) } }
     fun confirmDelete(show: Boolean) { if (!state.value.busy) { saved["manageDelete"] = show; mutable.update { it.copy(deleteConfirmation = show) } } }
     fun reminder(show: Boolean) { if (!state.value.busy) { saved["manageReminder"] = show; mutable.update { it.copy(reminder = show) } } }
+    fun saveReminder(enabled: Boolean?, minute: Int?) {
+        val s = state.value; val h = s.record?.record?.habit ?: return
+        if (!s.reminder || !s.readable || s.busy) return
+        mutable.update { it.copy(busy = true, error = null) }
+        viewModelScope.launch {
+            try { changeReminder(h.id, enabled, minute, h.reminderEnabled, h.reminderMinute) }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { mutable.update { it.copy(error = "Couldn’t change the reminder. Reopen it if another edit changed this field.") } }
+            finally { mutable.update { it.copy(busy = false) } }
+        }
+    }
     fun clearError() { mutable.update { it.copy(error = null) } }
     fun consumeRemoved() { mutable.update { it.copy(removed = null) } }
     fun archive() = mutate(delete = false)
@@ -81,6 +95,6 @@ class HabitManagementViewModel(private val source: HabitDataSource, private val 
     }
     private fun retainUndo(change: ArchiveChange?) { saved["undoHabit"] = change?.habitId; saved["undoAt"] = change?.archivedAt; mutable.update { it.copy(undo = change) } }
     companion object { val Factory = viewModelFactory { initializer {
-        HabitManagementViewModel(container.habits, container.habitHistory, container.settings.configuration, container.dates, createSavedStateHandle())
+        HabitManagementViewModel(container.habits, container.habitHistory, container.settings.configuration, container.dates, createSavedStateHandle(), changeReminder = container.habitHistory::setReminder, reminderStatus = container.reminders.status)
     } } }
 }

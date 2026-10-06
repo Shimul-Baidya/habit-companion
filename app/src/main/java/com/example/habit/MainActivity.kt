@@ -11,13 +11,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import com.example.habit.ui.controls.LocalDataBoundary
 import com.example.habit.ui.navigation.HabitNavHost
 import com.example.habit.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
     private val dates get() = (application as HabitApplication).container.dates
     private val timeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) { dates.refresh() }
+        override fun onReceive(context: Context, intent: Intent) { dates.refresh(); (application as HabitApplication).container.reminders.requestRefresh() }
     }
 
     override fun onStart() {
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
         ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
-    override fun onResume() { super.onResume(); dates.refresh() }
+    override fun onResume() { super.onResume(); dates.refresh(); (application as HabitApplication).container.reminders.requestRefresh() }
     override fun onStop() { unregisterReceiver(timeReceiver); super.onStop() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppTheme {
-                HabitNavHost(modifier = Modifier.fillMaxSize())
+                LocalDataBoundary((application as HabitApplication).container) { HabitNavHost(modifier = Modifier.fillMaxSize()) }
             }
         }
     }

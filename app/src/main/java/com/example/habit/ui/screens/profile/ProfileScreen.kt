@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habit.data.prefs.*
+import com.example.habit.ui.controls.*
 import com.example.habit.ui.components.*
 import com.example.habit.ui.screens.insights.*
 import com.example.habit.ui.theme.*
@@ -38,8 +39,15 @@ fun themeLabel(mode: ThemeMode) = when (mode) { ThemeMode.LIGHT -> "Light"; Them
 
 @Composable
 fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
-    viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
+    viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory),
+    actions: ProfileActionsViewModel = viewModel(factory = ProfileActionsViewModel.Factory)) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val actionState by actions.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.dialog) {
+        if (state.dialog in setOf("reminder", "export", "clear")) {
+            actions.open(state.dialog); viewModel.openDialog(null)
+        }
+    }
     val focus = LocalFocusManager.current
     BackHandler(state.editingName) { focus.clearFocus(); viewModel.cancelName() }
     val scroll = rememberLazyListState()
@@ -107,8 +115,17 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
             }
             item {
                 SettingsGroup("PREFERENCES") {
-                    SettingRow("Daily reminder", if (prefs?.reminderEnabled == true) "${timeLabel(prefs.reminderMinute)} · scheduling not connected" else "Off · scheduling not connected",
-                        { viewModel.openDialog("reminder") })
+                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f).clickable(enabled = enabled && !actionState.busy) { actions.open("reminder") }.heightIn(min = 48.dp), verticalArrangement = Arrangement.Center) {
+                            Text("Daily reminder", style = HabitTheme.type.title, color = HabitTheme.colors.onSurface)
+                            Text(if (prefs?.reminderEnabled == true) "${reminderTime(prefs.reminderMinute)} · tap to change time" else "Off · tap to choose time", style = HabitTheme.type.caption, color = HabitTheme.colors.onSurfaceMuted)
+                        }
+                        Switch(prefs?.reminderEnabled ?: false, { value ->
+                            if (value) actions.open("reminder")
+                            actions.reminder(value, prefs?.reminderMinute ?: 1200)
+                        }, enabled = enabled && !actionState.busy,
+                            modifier = Modifier.semantics { contentDescription = "Profile daily reminder" })
+                    }
                     HorizontalDivider(color = HabitTheme.colors.outline)
                     SettingRow("Theme", prefs?.let { themeLabel(it.themeMode) } ?: "Loading…", { viewModel.openDialog("theme") }, enabled)
                     HorizontalDivider(color = HabitTheme.colors.outline)
@@ -131,15 +148,16 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
             }
             item {
                 SettingsGroup("DATA") {
-                    SettingRow("Export data", "Save a local copy", { viewModel.openDialog("export") })
+                    SettingRow("Export data", "Save a local copy", { actions.open("export") })
                     HorizontalDivider(color = HabitTheme.colors.outline)
                     SettingRow("Restore data", "Not available in v1", {}, enabled = false)
                     HorizontalDivider(color = HabitTheme.colors.outline)
-                    SettingRow("Clear all data", "Remove local habits, history and settings", { viewModel.openDialog("clear") }, danger = true)
+                    SettingRow("Clear all data", "Remove local habits, history and settings", { actions.open("clear") }, danger = true)
                 }
             }
         }
     }
+    ProfileActionDialogs(actions, prefs)
     state.dialog?.let { dialog ->
         if (dialog == "theme" || dialog == "week") AlertDialog(onDismissRequest = { viewModel.openDialog(null) },
             title = { Text(if (dialog == "theme") "Theme" else "Week starts") },
@@ -154,18 +172,10 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
                     }
                 }
             }, confirmButton = { TextButton(onClick = { viewModel.openDialog(null) }, enabled = !state.writing) { Text("Cancel") } })
-        else AlertDialog(onDismissRequest = { viewModel.openDialog(null) }, title = { Text(when (dialog) {
-            "reminder" -> "Daily reminder"; "history" -> "Clear coach history"; "export" -> "Export data"; else -> "Clear all data"
-        }) }, text = { Text(when (dialog) {
-            "reminder" -> "Reminder scheduling is not connected yet. No reminder setting has been changed."
-            "history" -> "Local Coach history controls will be available with Coach conversations. No history has been cleared."
-            "export" -> "Export is not connected yet. No file has been written."
-            else -> "Data clearing is not connected yet. Your local habits, history and settings are unchanged."
-        }) }, confirmButton = { TextButton(onClick = { viewModel.openDialog(null) }) { Text("OK") } })
+        else AlertDialog(onDismissRequest = { viewModel.openDialog(null) }, title = { Text("Clear coach history") }, text = { Text("Local Coach history controls will be available with Coach conversations. No history has been cleared.") }, confirmButton = { TextButton(onClick = { viewModel.openDialog(null) }) { Text("OK") } })
     }
 }
 
-private fun timeLabel(minute: Int) = "%02d:%02d".format(minute / 60, minute % 60)
 @Composable
 private fun SettingsGroup(label: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -19,6 +19,7 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.habit.data.*
+import com.example.habit.ui.controls.*
 import com.example.habit.data.local.*
 import com.example.habit.data.prefs.*
 import com.example.habit.domain.*
@@ -56,6 +57,7 @@ class InsightWorkflowUiTest {
     private lateinit var source: Source
     private lateinit var progress: ProgressViewModel
     private lateinit var profile: ProfileViewModel
+    private lateinit var actions: ProfileActionsViewModel
     private lateinit var theme: AppThemeViewModel
     private val profileSaved = SavedStateHandle()
     private class Dates(day: LocalDate) : DateProvider {
@@ -89,6 +91,12 @@ class InsightWorkflowUiTest {
         compose.runOnIdle {
             progress = ProgressViewModel(source, settings.configuration, Dates(today), SavedStateHandle()).also { store.put("progress", it) }
             profile = ProfileViewModel(source, settings, Dates(today), profileSaved).also { store.put("profile", it) }
+            actions = ProfileActionsViewModel(object : ProfileActions {
+                override suspend fun reminder(enabled: Boolean, minute: Int) { settings.setReminder(enabled, minute) }
+                override suspend fun export(uri: String) { error("No destination selected in this fixture") }
+                override suspend fun clear() { error("This fixture only verifies cancellation") }
+            }, SavedStateHandle())
+            store.put("actions", actions)
             theme = AppThemeViewModel(settings.configuration).also { store.put("theme", it) }
         }
     }
@@ -106,7 +114,7 @@ class InsightWorkflowUiTest {
             DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(if (small) DpSize(360.dp, 640.dp) else DpSize(393.dp, 832.dp))) {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(if (small) 1.5f else 1f)) {
                     AppTheme(theme) {
-                        Box { if (isProfile) ProfileScreen({}, profile) else ProgressScreen({}, {}, progress)
+                        Box { if (isProfile) ProfileScreen({}, profile, actions) else ProgressScreen({}, {}, progress)
                             Box(Modifier.size(1.dp).testTag(if (HabitTheme.colors.isDark) "theme-dark" else "theme-light"))
                             Box(Modifier.size(1.dp).testTag(if (androidx.compose.foundation.isSystemInDarkTheme()) "system-dark" else "system-light")) }
                     }
@@ -218,7 +226,7 @@ class InsightWorkflowUiTest {
                     home = { add, coach, open, tab -> HomeScreen(add, coach, open, tab, home) }, form = { _, _ -> },
                     root = { tab, select -> when (tab) {
                         HomeTab.PROGRESS -> ProgressScreen({ nav.navigate(Routes.detail(it)) }, select, progress)
-                        HomeTab.PROFILE -> ProfileScreen(select, profile)
+                        HomeTab.PROFILE -> ProfileScreen(select, profile, actions)
                         HomeTab.COACH -> CoachRoot(select, remember { CoachAvailabilityViewModel(settings.coachEnabled).also { store.put("coach", it) } })
                         else -> Unit
                     } }, detail = { habitId, back ->
@@ -300,9 +308,9 @@ class InsightWorkflowUiTest {
         profileScroll("Clear all data"); capture("profile-light-data")
         compose.onNodeWithText("Restore data").assertIsNotEnabled()
         compose.onNodeWithText("Export data").performClick()
-        compose.onNodeWithText("No file has been written.", substring = true).assertIsDisplayed(); back()
+        compose.onNodeWithText("Saves a versioned JSON file", substring = true).assertIsDisplayed(); back()
         compose.onNodeWithText("Clear all data").performClick()
-        compose.onNodeWithText("Your local habits, history and settings are unchanged.", substring = true).assertIsDisplayed(); back()
+        compose.onNodeWithText("Type CLEAR to confirm.", substring = true).assertIsDisplayed(); back()
         assertEquals(1, runBlocking { history.records.first().size })
     }
     @Test fun darkSmallProfileAndThemeDialogVisualAndModalBack() {

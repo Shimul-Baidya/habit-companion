@@ -13,5 +13,6 @@ interface HabitHistoryDao {
     suspend fun record(id: Long): HabitRecord?
     @Upsert suspend fun putSchedule(value: ScheduleHistoryEntity)
     @Upsert suspend fun putTracking(value: TrackingHistoryEntity)
+    @Query("DELETE FROM habits") suspend fun deleteAll()
     @Query("DELETE FROM habits WHERE id = :id") suspend fun delete(id: Long)
 }

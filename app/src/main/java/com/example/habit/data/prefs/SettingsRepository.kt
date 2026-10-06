@@ -1,6 +1,8 @@
 package com.example.habit.data.prefs
 
 import android.content.Context
+import com.example.habit.data.controls.DataGate
+import kotlinx.coroutines.flow.first
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -29,8 +31,8 @@ interface ProfileSettings {
     suspend fun setCoachEnabled(enabled: Boolean)
 }
 
-class SettingsRepository(private val store: DataStore<Preferences>) : ProfileSettings {
-    constructor(context: Context) : this(context.settingsStore)
+class SettingsRepository(private val store: DataStore<Preferences>, private val gate: DataGate = DataGate()) : ProfileSettings {
+    constructor(context: Context, gate: DataGate = DataGate()) : this(context.settingsStore, gate)
 
     data class Configuration(
         val onboardingComplete: Boolean = false,
@@ -54,11 +56,11 @@ class SettingsRepository(private val store: DataStore<Preferences>) : ProfileSet
     val reminderEnabled: Flow<Boolean> = configuration.map { it.reminderEnabled }
     val reminderMinute: Flow<Int> = configuration.map { it.reminderMinute }
 
-    override suspend fun setWeekStart(day: DayOfWeek) { store.edit { it[Keys.WEEK_START] = day.value } }
-    override suspend fun setCoachEnabled(enabled: Boolean) { store.edit { it[Keys.COACH_ENABLED] = enabled } }
+    override suspend fun setWeekStart(day: DayOfWeek) { edit { it[Keys.WEEK_START] = day.value } }
+    override suspend fun setCoachEnabled(enabled: Boolean) { edit { it[Keys.COACH_ENABLED] = enabled } }
     suspend fun setReminder(enabled: Boolean, minute: Int) {
         require(minute in 0..1439)
-        store.edit { it[Keys.REMINDER_ENABLED] = enabled; it[Keys.REMINDER_MINUTE] = minute }
+        edit { it[Keys.REMINDER_ENABLED] = enabled; it[Keys.REMINDER_MINUTE] = minute }
     }
 
     /** SCR-01 routes on this; SCR-02 writes it on skip or on finishing the last pane. */
@@ -74,18 +76,32 @@ class SettingsRepository(private val store: DataStore<Preferences>) : ProfileSet
     }
 
     suspend fun setOnboardingComplete(complete: Boolean) {
-        store.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
+        edit { it[Keys.ONBOARDING_COMPLETE] = complete }
     }
 
     override suspend fun setUserName(name: String) {
-        store.edit { it[Keys.USER_NAME] = name }
+        edit { it[Keys.USER_NAME] = name }
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {
-        store.edit { it[Keys.THEME_MODE] = mode.name }
+        edit { it[Keys.THEME_MODE] = mode.name }
     }
 
+    private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) = gate.access { store.edit(block) }
+
+    // Operational metadata is local; it is deliberately excluded from user exports.
+    internal suspend fun resetState(): Pair<Boolean, Long> = store.data.first().let {
+        (it[Keys.RESET_PENDING] ?: false) to (it[Keys.GENERATION] ?: 0L)
+    }
+    internal suspend fun beginReset(generation: Long) { store.edit { it[Keys.RESET_PENDING] = true; it[Keys.GENERATION] = generation } }
+    internal suspend fun finishReset(generation: Long) { store.edit { it.clear(); it[Keys.GENERATION] = generation } }
+    internal suspend fun delivered(): Set<String> = store.data.first()[Keys.DELIVERED] ?: emptySet()
+    internal suspend fun markDelivered(values: Set<String>) { edit { it[Keys.DELIVERED] = values } }
+
     private object Keys {
+        val RESET_PENDING = booleanPreferencesKey("reset_pending")
+        val GENERATION = androidx.datastore.preferences.core.longPreferencesKey("data_generation")
+        val DELIVERED = androidx.datastore.preferences.core.stringSetPreferencesKey("reminder_delivered")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val USER_NAME = stringPreferencesKey("user_name")
         val THEME_MODE = stringPreferencesKey("theme_mode")

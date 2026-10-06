@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.habit.ui.screens.detail.*
+import com.example.habit.ui.controls.ReminderDialog
 import com.example.habit.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,10 +50,9 @@ import com.example.habit.ui.theme.*
         text = { Text("This permanently removes this habit and all its completion history, including its ${record.evaluation.metrics.bestStreak}-${if (occurrenceUnits(record.evaluation)) "occurrence" else "scheduled-day"} best streak. This cannot be undone.") },
         confirmButton = { TextButton(onClick = viewModel::delete, enabled = state.readable && !state.busy) { Text(if (state.busy) "Deleting…" else "Delete", color = HabitTheme.colors.danger) } },
         dismissButton = { TextButton(onClick = { viewModel.confirmDelete(false) }, enabled = !state.busy) { Text("Keep habit") } })
-    if (state.reminder) AlertDialog(onDismissRequest = { viewModel.reminder(false) }, title = { Text("Change reminder") },
-        text = { Text("Reminder configuration and notification delivery will be connected in the reminders step. No reminder has been changed.") },
-        confirmButton = { TextButton(onClick = { viewModel.reminder(false) }) { Text("OK") } })
-    state.error?.let { error -> AlertDialog(onDismissRequest = viewModel::clearError, title = { Text("Local habit change") }, text = { Text(error) },
+    if (state.reminder && record != null) ReminderDialog(false, record.record.habit.reminderEnabled, record.record.habit.reminderMinute,
+        state.globalReminderMinute, state.globalReminderEnabled, state.busy, state.error, viewModel::saveReminder, { viewModel.reminder(false) }, availability = state.reminderAvailability)
+    state.error?.takeIf { !state.reminder }?.let { error -> AlertDialog(onDismissRequest = viewModel::clearError, title = { Text("Local habit change") }, text = { Text(error) },
         confirmButton = { TextButton(onClick = { viewModel.clearError(); viewModel.retry() }) { Text("Retry") } },
         dismissButton = { TextButton(onClick = viewModel::clearError) { Text("Close") } }) }
     if (state.undo != null) {

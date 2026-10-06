@@ -141,7 +141,7 @@ class DetailWorkflowUiTest {
         back(); compose.onNodeWithText("Delete Read 20 pages?").assertDoesNotExist()
         compose.onNodeWithText("Archive habit").assertIsDisplayed()
         compose.onNodeWithText("Change reminder").performClick()
-        compose.onNodeWithText("No reminder has been changed.", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Daily reminders are off.", substring = true).assertIsDisplayed()
         back(); compose.onNodeWithText("Archive habit").performClick()
         compose.waitUntil(5000) { manager.state.value.undo != null && manager.state.value.id == null }
         assertEquals(15, runBlocking { history.record(id)!!.completions.size })

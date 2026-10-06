@@ -63,7 +63,7 @@ Provider, endpoint/model, credential provisioning and provider-specific retentio
 | 05 | Faithful Home, launch and main navigation | 03–04 | Complete |
 | 06 | Detail, corrections and management sheet | 03–05 | Complete |
 | 07 | Progress and Profile preferences | 03, 05–06 | Complete |
-| 08 | Reminders, export and destructive data controls | 02, 06–07 | Not started |
+| 08 | Reminders, export and destructive data controls | 02, 06–07 | Complete |
 | 09 | Supplied strategy retrieval and Coach contracts | 01–04, supplied resource | Not started |
 | 10 | Typed action execution, local history and Undo | 02, 04, 08–09 | Not started |
 | 11 | Coach screens, draft detours and root selection | 05–07, 09–10 | Not started |
@@ -262,7 +262,7 @@ For each check record whether it was executed, passed/failed, and its practical 
 
 ## 8. Progress and handoff record
 
-Current status: **chunks 01–07 complete and verified; awaiting owner approval for chunk 08**. Chunks 08–13 remain not started. Chunk 02 was explicitly authorised by the owner, including fixing the app's visible name.
+Current status: **chunks 01–08 complete; chunk 08 passed focused verification; awaiting owner approval for chunk 09**. Chunks 09–13 remain not started. Chunk 02 was explicitly authorised by the owner, including fixing the app's visible name.
 
 Append one concise entry per completed or paused implementation chunk using:
 
@@ -358,3 +358,14 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - **Limits:** tests use isolated Room/preferences and retain APKs; no real-data reset, uninstall or Git mutation. Forced configurations/saved-state reconstruction do not prove every OEM layout or arbitrary process kill, and captures omit the native keyboard itself (visibility is asserted at runtime). There is no remaining chunk 07 implementation check or consequential product decision.
 - **Next:** chunk 08, real inherited/override reminders and permission/eligibility/rescheduling, explicit versioned file-picker export and type-to-confirm coordinated local clearing, with Restore disabled and Coach-history attachment remaining chunk 10. Obtain owner approval before implementation.
 - **Suggested one-line commit:** `feat: complete Progress and Profile with reactive local preferences`
+
+
+### Chunk 08 — Complete, 6 October 2026
+
+- **Implemented:** faithful inline global reminder toggle/time and per-habit inherited/off/custom dialogs. Field-only conflict-checked writes, busy/retry/saved time state, explicit notification permission/settings access and honest inexact timing. One local AlarmManager alarm rechecks permission/channel, current dated binary/quantity expectations, Daily/Custom/Weekly pending eligibility, generation/date/time/zone and a persisted same-date attempt ledger. Observations/resume/boot/time/date/zone/package events rearm; completion, quota achievement, archive/delete and wipe cancel applicable alarms/notifications. No exact-alarm permission, dependency or external service.
+- **Export/clear:** deliberate system-picker/granted-URI format-v1 JSON includes schema-v2 raw/legacy/archived records, exact quantities, pending histories, cues/plans/settings. Excludes operational state/drafts; Coach storage marked unimplemented until chunk 10; Restore disabled. IO runs off the UI thread, snapshots/writes are coordinated, cancel writes nothing and failures never claim success. Exact CLEAR resets Room/preferences/drafts/navigation/reminders to onboarding while retaining exported files/Android notification settings. Shared gate plus durable reset intent/generation supports failure/recovery, rejects old queued writes and retains non-reused IDs. No source resource/schema/database identity/old preference key/normal draft-contract or Git change.
+- **Interpretation:** global enablement is the master; custom times respect it. Undelivered eligible reminders can catch up within the same day; no yesterday spillover or repeated same-date attempt. Ledger-before-post can lose a notification on abrupt process death; timing/force-stop limits are disclosed. Wipe is logical clearing; marker-write failure does not erase data, and later failures require safe recovery. Documented in DOMAIN_BEHAVIOR.md.
+- **Checks actually run:** compilation, 12 focused JVM tests and 33 Pixel 7 Android 17 checks passed, zero failures/errors/skips; lint zero errors/26 existing advisories. The 33 include 18 new store/UI cases and 15 directly affected form/preferences/Profile/management regressions. Separate successful narrow reruns verified native keyboard/insets with accessible time actions and full native picker IO/JSON reopening through private fixtures. Earlier harness failures (selectors, Back, test main thread, retained alarm diagnostic history, native window/case handling and Kotlin-in-standalone-test-provider) were fixed. Android 17 rejected shell QA-component toggles; a default-hidden signature-protected test-root control now acknowledges cleanup and was retested. No owner data or permission reset, uninstall command or Git mutation. Retained debug installation/cold launch/process life verified; git diff --check passed.
+- **Evidence/limits:** supplied SCR-14/15/FLOW-11/14 composition compared with light reference and small/dark/font-1.5 Data/dialog captures. Disabled destructive colour and disclosure length corrected. Native keyboard visibility asserted; PNGs omit the keyboard itself. Preserved 33-case reports at app/build/reports/chunk08-verification/focused-device; final connected reports contain the last native-export check. Unchanged-schema migrations/unrelated full suites intentionally deferred under owner direction. Actual reboot/Doze/OEM timing, granted-permission notification display, cloud providers and arbitrary process kill remain documented platform checks for chunk 13. Coach data attachment remains chunk 10.
+- **Next:** chunk 09, unchanged supplied 60-card catalog, deterministic relevant retrieval and strict minimal Coach payload/response/action contracts. Obtain owner approval first.
+- **Suggested one-line commit:** `feat: add local reminders, versioned export and coordinated data clearing`

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habit.ui.management.*
+import com.example.habit.ui.controls.LocalDataGeneration
 import com.example.habit.ui.screens.detail.HabitDetailScreen
 import com.example.habit.ui.components.LocalHabitSharedScope
 import com.example.habit.ui.components.LocalHabitAnimatedScope
@@ -31,7 +32,7 @@ import com.example.habit.ui.theme.Motion
 
 @Composable
 fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
-    val management: HabitManagementViewModel = viewModel(factory = HabitManagementViewModel.Factory)
+    val management: HabitManagementViewModel = viewModel(key = "management-${LocalDataGeneration.current}", factory = HabitManagementViewModel.Factory)
     Box {
     HabitNavigationGraph(navController, modifier,
         splash = { onboarding, home -> SplashScreen(onboarding, home) },
