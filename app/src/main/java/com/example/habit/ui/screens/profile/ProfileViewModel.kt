@@ -21,10 +21,10 @@ data class ProfileUiState(
     val read: SnapshotRead = SnapshotRead(), val preferences: SettingsRepository.Configuration? = null,
     val preferenceError: Boolean = false, val writing: Boolean = false, val writeError: Boolean = false,
     val editingName: Boolean = false, val nameInput: String = "", val invalidName: Boolean = false,
-    val dialog: String? = null,
+    val dialog: String? = null, val historyCleared: Boolean = false,
 )
 class ProfileViewModel(habits: HabitDataSource, private val settings: ProfileSettings, dates: DateProvider,
-    private val saved: SavedStateHandle) : ViewModel() {
+    private val saved: SavedStateHandle, private val clearCoachHistory: (suspend () -> Unit)? = null) : ViewModel() {
     private val reader = SnapshotReader(viewModelScope, habits, settings.configuration, dates)
     private val attempts = MutableStateFlow(0)
     private val mutable = MutableStateFlow(ProfileUiState(editingName = saved["editingName"] ?: false,
@@ -64,6 +64,19 @@ class ProfileViewModel(habits: HabitDataSource, private val settings: ProfileSet
     }
     fun theme(mode: ThemeMode) = write({ settings.setThemeMode(mode) }, { it.copy(themeMode = mode) })
     fun weekStart(day: DayOfWeek) = write({ settings.setWeekStart(day) }, { it.copy(weekStart = day) })
+    fun clearHistory() {
+        if (mutable.value.writing) return
+        val operation = clearCoachHistory ?: run { mutable.update { it.copy(writeError = true) }; return }
+        mutable.update { it.copy(writing = true, writeError = false, historyCleared = false) }
+        viewModelScope.launch {
+            try {
+                operation(); saved["profileDialog"] = null
+                mutable.update { it.copy(dialog = null, historyCleared = true) }
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { mutable.update { it.copy(writeError = true) }
+            } finally { mutable.update { it.copy(writing = false) } }
+        }
+    }
     fun coach(enabled: Boolean) = write({ settings.setCoachEnabled(enabled) }, { it.copy(coachEnabled = enabled) })
     private fun write(operation: suspend () -> Unit, update: (SettingsRepository.Configuration) -> SettingsRepository.Configuration,
         nameSaved: Boolean = false) {
@@ -84,6 +97,6 @@ class ProfileViewModel(habits: HabitDataSource, private val settings: ProfileSet
         }
     }
     companion object { val Factory = viewModelFactory { initializer {
-        ProfileViewModel(container.habits, container.settings, container.dates, createSavedStateHandle())
+        ProfileViewModel(container.habits, container.settings, container.dates, createSavedStateHandle(), container.coachActions::clearHistory)
     } } }
 }

@@ -54,9 +54,11 @@ class LocalDataControls(private val database: HabitDatabase, private val setting
     }
     override suspend fun export(output: suspend (String) -> OutputStream): Unit = withContext(Dispatchers.IO) { gate.access {
         check(mutable.value is DataState.Ready)
-        val records = database.historyDao().records()
+        val (records, coach) = database.withTransaction {
+            database.historyDao().records() to CoachExport(database.coachDao().allMessages(), database.coachDao().allCaches(), database.coachDao().allActions())
+        }
         val prefs = settings.configuration.first()
-        val text = ExportDocument.encode(records, prefs, clock)
+        val text = ExportDocument.encode(records, prefs, clock, coach)
         output("Habit-Companion-${clock.instant().atZone(clock.zone).toLocalDate()}.json").use {
             it.write(text.toByteArray(Charsets.UTF_8)); it.flush()
         }
@@ -64,11 +66,13 @@ class LocalDataControls(private val database: HabitDatabase, private val setting
 }
 
 /** Raw versioned facts preserve legacy metadata, pending revisions and exact decimal amounts. */
+data class CoachExport(val messages: List<CoachMessageEntity> = emptyList(), val caches: List<CoachCacheEntity> = emptyList(),
+    val actions: List<CoachActionEntity> = emptyList())
 object ExportDocument {
-    fun encode(records: List<HabitRecord>, prefs: SettingsRepository.Configuration, clock: Clock): String {
+    fun encode(records: List<HabitRecord>, prefs: SettingsRepository.Configuration, clock: Clock, coach: CoachExport = CoachExport()): String {
         fun json(vararg fields: Pair<String, Any?>) = JSONObject().apply { fields.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }
         fun array(values: List<JSONObject>) = JSONArray(values)
-        return json("format" to "habit-companion", "formatVersion" to 1, "roomSchemaVersion" to 2,
+        return json("format" to "habit-companion", "formatVersion" to 1, "roomSchemaVersion" to 3,
             "exportedAt" to clock.instant().toString(), "deviceZone" to clock.zone.id,
             "settings" to json("onboardingComplete" to prefs.onboardingComplete, "userName" to prefs.userName,
                 "themeMode" to prefs.themeMode.name, "weekStart" to prefs.weekStart.value, "coachEnabled" to prefs.coachEnabled,
@@ -86,7 +90,10 @@ object ExportDocument {
                     "completions" to array(r.completions.sortedBy { it.epochDay }.map {
                         json("epochDay" to it.epochDay, "legacyCount" to it.count, "completedAt" to it.completedAt,
                             "trackingMode" to it.trackingMode, "quantityAmount" to it.quantityAmount, "quantityUnit" to it.quantityUnit) })) }),
-            "coachHistory" to json("storageVersion" to 0, "threads" to JSONArray(), "caches" to JSONArray()),
-            "notice" to "Contains private local data. Restore/import is unavailable in v1. Coach storage is not yet implemented. Operational reminder/reset state and unsaved drafts are excluded.").toString(2)
+            "coachHistory" to json("storageVersion" to 1,
+                "messages" to array(coach.messages.map { json("id" to it.id, "habitId" to it.habitId, "role" to it.role, "text" to it.text, "createdAt" to it.createdAt, "exchangeId" to it.exchangeId) }),
+                "caches" to array(coach.caches.map { json("id" to it.id, "habitId" to it.habitId, "request" to JSONObject(it.request), "response" to if (it.response.isBlank()) null else JSONObject(it.response), "localFieldRevisions" to JSONObject(it.baseline), "catalogSha256" to it.catalogSha256, "createdAt" to it.createdAt) }),
+                "actions" to array(coach.actions.map { json("id" to it.id, "habitId" to it.habitId, "strategyId" to it.strategyId, "inverse" to JSONObject(it.inverse), "appliedAt" to it.appliedAt, "status" to it.status, "confirmation" to it.confirmation) })),
+            "notice" to "Contains private local data. Restore/import is unavailable in v1. Includes local Coach questions, responses, context and action receipts. Operational reminder/reset state and unsaved drafts are excluded.").toString(2)
     }
 }

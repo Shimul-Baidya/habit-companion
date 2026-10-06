@@ -11,6 +11,7 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.habit.data.*
+import com.example.habit.coach.*
 import com.example.habit.data.local.*
 import com.example.habit.domain.*
 import kotlinx.coroutines.*
@@ -178,6 +179,52 @@ class FormPersistenceTest {
         } finally { withContext(Dispatchers.Main) { stores.forEach { it.clear() } } }
     }
 
+    @Test fun coachDraftReceiptParcelRestorationPreservesDeadlineAndNeverInsertsOnApplyOrUndo() = runBlocking {
+        val catalog = CoachJson.catalog(InstrumentationRegistry.getInstrumentation().targetContext.assets.open("coach_cards.json").use { it.readBytes() })
+        val stores = listOf(ViewModelStore(), ViewModelStore()); val enabled = MutableStateFlow(true)
+        val fixed = Clock.fixed(monday.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+        try {
+            val handle = SavedStateHandle()
+            val first = withContext(Dispatchers.Main) { NewHabitViewModel(repo(), handle, enabled, fixed).also { stores[0].put("form", it) } }
+            withTimeout(5000) { first.state.first { !it.loading && it.coachEnabled } }
+            withContext(Dispatchers.Main) { first.change(HabitFormDraft(name = "Draft", planNote = "Prior plan")) }
+            val entry = first.coachEntry() as FormCoachEntry.Planning
+            val request = (CoachRequestBuilder.planning(catalog, entry.request.draft, 0, enabled = true) as RequestResult.Ready).request
+            val response = (CoachResponseValidator.validate(CoachResponse(CoachReading(listOf(ReadingFact.PLANNING_DRAFT), null), request.strategies.map {
+                CoachSuggestion(it.card.id, "Small start", "If useful, plan a small start", CoachAction.NewHabitCount(1)) }), request, catalog) as ResponseResult.Valid).response
+            val receipt = withContext(Dispatchers.Main) {
+                assertTrue(first.beginCoach(entry.request.token, "form_exchange", request))
+                requireNotNull(first.applyCoach(entry.request.token, "form_exchange", 0, request, response, catalog))
+            }
+            assertEquals("Start with 1 new habit.", first.state.value.draft.planNote); assertTrue(db.historyDao().records().isEmpty())
+            val bundle = Bundle()
+            handle.keys().forEach { key -> when (val value = handle.get<Any>(key)) {
+                is String -> bundle.putString(key, value)
+                is Int -> bundle.putInt(key, value)
+                is Long -> bundle.putLong(key, value)
+                is Boolean -> bundle.putBoolean(key, value)
+                is ArrayList<*> -> { @Suppress("UNCHECKED_CAST") bundle.putStringArrayList(key, value as ArrayList<String>) }
+                else -> fail("Only primitive saved values are allowed")
+            } }
+            val parcel = Parcel.obtain()
+            val restored = try { parcel.writeBundle(bundle); parcel.setDataPosition(0); requireNotNull(parcel.readBundle(javaClass.classLoader)) } finally { parcel.recycle() }
+            @Suppress("DEPRECATION") val secondHandle = SavedStateHandle(restored.keySet().associateWith { restored.get(it) })
+            val second = withContext(Dispatchers.Main) { NewHabitViewModel(repo(), secondHandle, enabled, Clock.offset(fixed, Duration.ofMillis(9999))).also { stores[1].put("form", it) } }
+            withTimeout(5000) { second.state.first { !it.loading && it.coachEnabled } }
+            withContext(Dispatchers.Main) {
+                second.change(second.state.value.draft.copy(name = "Later name"))
+                assertEquals(receipt, second.coachReceipt(receipt.id))
+                assertEquals(CoachUndoResult.UNDONE, second.undoCoach(receipt.id))
+            }
+            assertEquals("Later name", second.state.value.draft.name); assertEquals("Prior plan", second.state.value.draft.planNote)
+            assertTrue(db.historyDao().records().isEmpty())
+            enabled.value = false; withTimeout(5000) { second.state.first { !it.coachEnabled } }
+            withContext(Dispatchers.Main) { assertNull(second.applyCoach(entry.request.token, "form_exchange", 0, request, response, catalog)); second.save(); second.save() }
+            val saved = withTimeout(5000) { second.state.first { it.savedHabitId != null } }.savedHabitId!!
+            assertEquals(1, db.historyDao().records().size); assertEquals("Prior plan", repo().record(saved)!!.habit.planNote)
+            withContext(Dispatchers.Main) { assertEquals(CoachUndoResult.UNAVAILABLE, second.undoCoach(receipt.id)) }
+        } finally { withContext(Dispatchers.Main) { stores.forEach { it.clear() } } }
+    }
     @Test fun deletedAndArchivedRecordsCannotBeResurrectedByEdit() = runBlocking {
         val repository = repo()
         val id = repository.create(HabitDraft("Read")); val before = repository.record(id)!!.editableDraft()

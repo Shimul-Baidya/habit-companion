@@ -6,6 +6,17 @@ import java.time.Instant
 import java.time.ZoneId
 
 object HabitMigrations {
+    val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS coach_messages (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, habit_id INTEGER NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, exchange_id TEXT NOT NULL, FOREIGN KEY(habit_id) REFERENCES habits(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_coach_messages_habit_id ON coach_messages(habit_id)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS coach_caches (id TEXT NOT NULL PRIMARY KEY, habit_id INTEGER NOT NULL, request TEXT NOT NULL, response TEXT NOT NULL, baseline TEXT NOT NULL, catalog_sha256 TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(habit_id) REFERENCES habits(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_coach_caches_habit_id ON coach_caches(habit_id)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS coach_actions (id TEXT NOT NULL PRIMARY KEY, habit_id INTEGER NOT NULL, strategy_id TEXT NOT NULL, inverse TEXT NOT NULL, applied_at INTEGER NOT NULL, status TEXT NOT NULL, confirmation TEXT NOT NULL, FOREIGN KEY(habit_id) REFERENCES habits(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_coach_actions_habit_id ON coach_actions(habit_id)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS habit_field_versions (habit_id INTEGER NOT NULL, field TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(habit_id, field), FOREIGN KEY(habit_id) REFERENCES habits(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        }
+    }
     val MIGRATION_1_2: Migration = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE habits ADD COLUMN created_epoch_day INTEGER NOT NULL DEFAULT 0")

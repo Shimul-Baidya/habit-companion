@@ -56,10 +56,10 @@ class StorageTest {
             execSQL("INSERT INTO completions VALUES (33, ?, 1, ?)", arrayOf<Any>(monday.plusDays(2).toEpochDay(), archived - 1000))
             close()
         }
-        // The production Room open path performs migration and generated v2 schema validation.
-        val db = Room.databaseBuilder(context, HabitDatabase::class.java, name).addMigrations(HabitMigrations.MIGRATION_1_2).build().also { opened += it }
+        // The production Room open path performs migration and generated v3 schema validation.
+        val db = Room.databaseBuilder(context, HabitDatabase::class.java, name).addMigrations(HabitMigrations.MIGRATION_1_2, HabitMigrations.MIGRATION_2_3).build().also { opened += it }
         val daily = db.historyDao().record(11)!!
-        assertEquals(2, db.openHelper.readableDatabase.version)
+        assertEquals(3, db.openHelper.readableDatabase.version)
         assertEquals("Daily original", daily.habit.name)
         assertEquals("book", daily.habit.iconKey)
         assertEquals("teal", daily.habit.colorKey)

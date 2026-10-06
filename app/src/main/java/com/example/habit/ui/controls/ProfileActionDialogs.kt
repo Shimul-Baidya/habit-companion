@@ -18,7 +18,7 @@ import com.example.habit.data.prefs.SettingsRepository
             prefs.reminderEnabled, state.busy, state.error, { enabled, minute -> viewModel.reminder(enabled == true, requireNotNull(minute)) }, { viewModel.open(null) }, availability = state.availability)
         "export" -> AlertDialog(onDismissRequest = { viewModel.open(null) }, title = { Text("Export data") }, text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("Saves a versioned JSON file with all habits (including archives), dated schedules and targets, completions, cues, plans and settings. It includes your profile and habit names. Unsaved drafts are excluded. A cloud location may upload the file. Restore is unavailable in v1.")
+                Text("Saves a versioned JSON file with all habits (including archives), dated schedules and targets, completions, cues, plans, settings and local Coach questions/responses. It includes your profile and habit names. Unsaved drafts are excluded. A cloud location may upload the file. Restore is unavailable in v1.")
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (state.busy) Text("Writing export…")
             }

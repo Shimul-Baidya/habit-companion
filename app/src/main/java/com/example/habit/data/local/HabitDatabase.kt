@@ -6,12 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [HabitEntity::class, CompletionEntity::class, ScheduleHistoryEntity::class, TrackingHistoryEntity::class],
-    version = 2,
+    entities = [HabitEntity::class, CompletionEntity::class, ScheduleHistoryEntity::class, TrackingHistoryEntity::class, CoachMessageEntity::class, CoachCacheEntity::class, CoachActionEntity::class, HabitFieldVersion::class],
+    version = 3,
     exportSchema = true,
 )
 abstract class HabitDatabase : RoomDatabase() {
 
+    abstract fun coachDao(): CoachDao
     abstract fun habitDao(): HabitDao
     abstract fun completionDao(): CompletionDao
     abstract fun historyDao(): HabitHistoryDao
@@ -21,7 +22,7 @@ abstract class HabitDatabase : RoomDatabase() {
 
         fun build(context: Context): HabitDatabase =
             Room.databaseBuilder(context.applicationContext, HabitDatabase::class.java, NAME)
-                .addMigrations(HabitMigrations.MIGRATION_1_2)
+                .addMigrations(HabitMigrations.MIGRATION_1_2, HabitMigrations.MIGRATION_2_3)
                 .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
     }

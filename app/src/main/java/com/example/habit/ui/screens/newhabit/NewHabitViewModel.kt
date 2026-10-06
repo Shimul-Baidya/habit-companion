@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.habit.data.*
+import com.example.habit.coach.*
+import com.example.habit.domain.DeviceClock
 import com.example.habit.ui.container
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
@@ -42,6 +44,7 @@ class NewHabitViewModel(
     private val forms: HabitFormDataSource,
     private val saved: SavedStateHandle,
     coachEnabled: Flow<Boolean>,
+    clock: java.time.Clock = DeviceClock(),
 ) : ViewModel() {
     private val id = saved.get<Long>(ARG_HABIT_ID)?.takeIf { it > 0 }
     private val token = saved.get<String>(TOKEN) ?: UUID.randomUUID().toString().also { saved[TOKEN] = it }
@@ -52,6 +55,22 @@ class NewHabitViewModel(
         savedHabitId = saved[SAVED_ID], dirty = readDraft("draft.") != initial,
         automaticCoach = saved.get<Boolean>(ARG_PLANNING) == true))
     val state = mutableState.asStateFlow()
+    private val coachActions = DraftCoachActions(saved, token, clock, { state.value.draft }, ::change)
+    fun beginCoach(draftToken: String, exchangeId: String, request: CoachRequest): Boolean {
+        if (id != null || !state.value.coachEnabled || state.value.loading || state.value.loadError != null || state.value.saving || state.value.savedHabitId != null) return false
+        coachActions.beginInteraction(draftToken, exchangeId, request)
+        return true
+    }
+    fun applyCoach(draftToken: String, exchangeId: String, index: Int, request: CoachRequest,
+        response: ValidatedCoachResponse, catalog: StrategyCatalog): CoachApplyReceipt? {
+        if (id != null || !state.value.coachEnabled || state.value.loading || state.value.loadError != null || state.value.saving || state.value.savedHabitId != null) return null
+        return coachActions.apply(draftToken, exchangeId, index, request, response, catalog)
+    }
+    fun undoCoach(actionId: String): CoachUndoResult {
+        if (id != null || state.value.loading || state.value.loadError != null || state.value.saving || state.value.savedHabitId != null) return CoachUndoResult.UNAVAILABLE
+        return coachActions.undo(actionId)
+    }
+    fun coachReceipt(actionId: String) = coachActions.receipt(actionId)
 
     init {
         viewModelScope.launch {
@@ -84,6 +103,7 @@ class NewHabitViewModel(
 
     fun change(draft: HabitFormDraft) {
         if (state.value.saving || state.value.savedHabitId != null || (id != null && saved.get<Boolean>(INITIALIZED) != true)) return
+        coachActions.changed(state.value.draft, draft)
         writeDraft("draft.", draft)
         mutableState.update { it.copy(draft = draft, dirty = draft != initial, saveError = null,
             showValidation = true, duplicateName = duplicate(draft.name), confirmDuplicate = false) }

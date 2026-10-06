@@ -143,7 +143,8 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
                             modifier = Modifier.semantics { contentDescription = "Coach suggestions" }.testTag("coach-setting"))
                     }
                     HorizontalDivider(color = HabitTheme.colors.outline)
-                    SettingRow("Clear coach history", "Local conversations", { viewModel.openDialog("history") })
+                    SettingRow("Clear coach history", "Local conversations", { viewModel.openDialog("history") }, enabled = !state.writing)
+                    if (state.historyCleared) Text("Coach history cleared.", style = HabitTheme.type.caption, color = HabitTheme.colors.primary)
                 }
             }
             item {
@@ -172,7 +173,13 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
                     }
                 }
             }, confirmButton = { TextButton(onClick = { viewModel.openDialog(null) }, enabled = !state.writing) { Text("Cancel") } })
-        else AlertDialog(onDismissRequest = { viewModel.openDialog(null) }, title = { Text("Clear coach history") }, text = { Text("Local Coach history controls will be available with Coach conversations. No history has been cleared.") }, confirmButton = { TextButton(onClick = { viewModel.openDialog(null) }) { Text("OK") } })
+        else AlertDialog(onDismissRequest = { viewModel.openDialog(null) }, title = { Text("Clear coach history?") },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text("Remove all local Coach conversations, cached suggestions and Undo receipts? Applied settings, habits and completions stay saved.")
+                if (state.writeError) Text("Couldn’t clear Coach history. Try again.", color = HabitTheme.colors.danger)
+            } },
+            confirmButton = { TextButton(onClick = viewModel::clearHistory, enabled = !state.writing) { Text(if (state.writing) "Clearing…" else if (state.writeError) "Retry" else "Clear history") } },
+            dismissButton = { TextButton(onClick = { viewModel.openDialog(null) }, enabled = !state.writing) { Text("Cancel") } })
     }
 }
 

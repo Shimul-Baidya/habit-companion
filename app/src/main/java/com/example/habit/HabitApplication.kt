@@ -8,6 +8,7 @@ import com.example.habit.coach.UnconfiguredCoachService
 import com.example.habit.data.controls.*
 import com.example.habit.reminders.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import com.example.habit.data.local.CompletionDao
 import com.example.habit.data.local.HabitDao
 import com.example.habit.data.local.HabitDatabase
@@ -32,6 +33,9 @@ class AppContainer(context: Context) {
     private val gate = DataGate()
     private val database: HabitDatabase by lazy { HabitDatabase.build(context) }
 
+    val coachActions by lazy { com.example.habit.coach.CoachActionRepository(database, habitHistory, gate, clock,
+        { (strategies.load() as? com.example.habit.coach.CatalogResult.Ready)?.catalog ?: error("Coach catalog unavailable") },
+        { settings.coachEnabled.first() }) }
     val habitDao: HabitDao by lazy { database.habitDao() }
     val completionDao: CompletionDao by lazy { database.completionDao() }
     val settings: SettingsRepository by lazy { SettingsRepository(context, gate) }

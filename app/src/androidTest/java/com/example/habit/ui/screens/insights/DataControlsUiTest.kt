@@ -18,6 +18,9 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.habit.data.*
+import com.example.habit.coach.*
+import org.json.JSONObject
+import org.json.JSONArray
 import com.example.habit.data.controls.*
 import com.example.habit.data.local.*
 import com.example.habit.data.prefs.*
@@ -51,6 +54,10 @@ class DataControlsUiTest {
     private lateinit var data: LocalDataControls
     private lateinit var profile: ProfileViewModel
     private lateinit var actions: ProfileActionsViewModel
+    private lateinit var coach: CoachActionRepository
+    private val profileSaved = SavedStateHandle()
+    private var clearCalls = 0
+    private var holdClear: CompletableDeferred<Unit>? = null
     private lateinit var manager: HabitManagementViewModel
     private val actionSaved = SavedStateHandle()
     private class Dates(private val day: LocalDate) : DateProvider {
@@ -65,8 +72,12 @@ class DataControlsUiTest {
         history = HabitHistoryRepository(db, clock, gate)
         data = LocalDataControls(db, settings, gate, clock) {}
         data.initialize(); settings.setOnboardingComplete(true)
+        val catalog = CoachJson.catalog(context.assets.open("coach_cards.json").use { it.readBytes() })
+        coach = CoachActionRepository(db, history, gate, clock, { catalog }, { settings.coachEnabled.first() })
         compose.runOnIdle {
-            profile = ProfileViewModel(HabitRepository(history), settings, Dates(day), SavedStateHandle())
+            profile = ProfileViewModel(HabitRepository(history), settings, Dates(day), profileSaved) {
+                clearCalls++; holdClear?.await(); coach.clearHistory()
+            }
             actions = ProfileActionsViewModel(LocalProfileActions(settings, data) { uri ->
                 requireNotNull(context.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt"))
             }, actionSaved)
@@ -90,8 +101,47 @@ class DataControlsUiTest {
     private fun capture(name: String, dialog: Boolean = false) {
         val image = if (dialog) compose.onAllNodes(isDialog()).let { it[it.fetchSemanticsNodes().lastIndex] }.captureToImage() else compose.onNodeWithTag("qa-root").captureToImage()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val folder = File(context.cacheDir, "chunk08-qa").apply { mkdirs() }
+        val folder = File(context.cacheDir, if (name.startsWith("coach-")) "chunk10-qa" else "chunk08-qa").apply { mkdirs() }
         File(folder, "$name.png").outputStream().use { image.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+    }
+    private fun seedCoach(): Pair<Long, CoachApplyReceipt> = runBlocking {
+        val id = history.create(HabitDraft("Keep this habit"))
+        val catalog = CoachJson.catalog(InstrumentationRegistry.getInstrumentation().targetContext.assets.open("coach_cards.json").use { it.readBytes() })
+        val request = (CoachRequestBuilder.existing(catalog, history.record(id)!!.toHistory(), day, "cues planning simplicity starting", true) as RequestResult.Ready).request
+        val raw = JSONObject().put("reading", JSONObject().put("facts", JSONArray(listOf("OPEN_EXPECTATIONS"))).put("possibleBarrier", JSONObject.NULL))
+            .put("suggestions", JSONArray(request.strategies.map { JSONObject().put("strategyId", it.card.id).put("title", "Test plan").put("advice", "If useful, start small")
+                .put("action", JSONObject().put("type", "PLAN").put("note", "Saved plan")) })).toString()
+        coach.beginInteraction(id, "ui_exchange", request); coach.saveExchange(id, "ui_exchange", request, raw)
+        id to coach.apply(id, "ui_exchange", 0, request)
+    }
+    @Test fun coachHistoryClearCancelConfirmationAndRetainedSettingsUseRealStorage() {
+        val (id, receipt) = seedCoach(); screen(); scroll("Clear coach history")
+        compose.onNodeWithText("Clear coach history").performClick(); capture("coach-clear-light", dialog = true)
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(3, runBlocking { coach.messages(id).first().size })
+        compose.onNodeWithText("Clear coach history").performClick()
+        compose.onNodeWithText("Clear history").performClick()
+        compose.waitUntil(5000) { profile.state.value.historyCleared }
+        assertTrue(runBlocking { coach.messages(id).first().isEmpty() }); assertEquals("Saved plan", runBlocking { history.record(id)!!.habit.planNote })
+        assertEquals(CoachUndoResult.UNAVAILABLE, runBlocking { coach.undo(receipt.id) })
+        scroll("Coach history cleared."); compose.onNodeWithText("Coach history cleared.").assertIsDisplayed(); assertEquals(1, clearCalls)
+    }
+    @Test fun coachClearFailureRetainsDataRetryAndBusyGuardWorkAtLargeText() {
+        val (id, _) = seedCoach(); screen(dark = true, small = true); scroll("Clear coach history")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fail_coach_clear BEFORE DELETE ON coach_caches BEGIN SELECT RAISE(ABORT, 'test'); END")
+        compose.onNodeWithText("Clear coach history").performClick(); compose.onNodeWithText("Clear history").performClick()
+        compose.waitUntil(5000) { profile.state.value.writeError && !profile.state.value.writing }
+        compose.onNodeWithText("Couldn’t clear Coach history. Try again.").assertIsDisplayed()
+        assertEquals(3, runBlocking { coach.messages(id).first().size }); capture("coach-clear-error-small-dark", dialog = true)
+        db.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_coach_clear")
+        holdClear = CompletableDeferred()
+        compose.onNodeWithText("Retry").performClick()
+        compose.waitUntil(5000) { profile.state.value.writing }
+        compose.runOnIdle { profile.clearHistory(); profile.openDialog(null) }
+        compose.onNodeWithText("Cancel").assertIsNotEnabled(); compose.onNodeWithText("Clearing…").assertIsNotEnabled()
+        assertEquals(2, clearCalls); holdClear!!.complete(Unit)
+        compose.waitUntil(5000) { profile.state.value.historyCleared }
+        assertTrue(runBlocking { coach.messages(id).first().isEmpty() })
     }
     @Test fun globalReminderWritesImmediatelyAndNestedTimeCancelKeepsSetting() {
         screen(); scroll("Daily reminder"); compose.onNodeWithContentDescription("Profile daily reminder").performClick()

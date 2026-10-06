@@ -7,6 +7,7 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.habit.data.*
+import com.example.habit.coach.*
 import com.example.habit.data.controls.*
 import com.example.habit.data.local.*
 import com.example.habit.data.prefs.*
@@ -75,6 +76,30 @@ class DataControlsTest {
         data.initialize()
     }
     @After fun close() { job.cancel(); db.close(); file.delete() }
+    private suspend fun seedCoach(id: Long): Pair<CoachActionRepository, CoachApplyReceipt> {
+        val catalog = CoachJson.catalog(InstrumentationRegistry.getInstrumentation().targetContext.assets.open("coach_cards.json").use { it.readBytes() })
+        val coach = CoachActionRepository(db, history, gate, clock, { catalog }, { prefs.coachEnabled.first() })
+        val request = (CoachRequestBuilder.existing(catalog, history.record(id)!!.toHistory(), day, "cues planning simplicity starting", true) as RequestResult.Ready).request
+        val response = JSONObject().put("reading", JSONObject().put("facts", org.json.JSONArray(listOf("OPEN_EXPECTATIONS"))).put("possibleBarrier", JSONObject.NULL))
+            .put("suggestions", org.json.JSONArray(request.strategies.map { JSONObject().put("strategyId", it.card.id).put("title", "Test plan")
+                .put("advice", "If useful, start small").put("action", JSONObject().put("type", "PLAN").put("note", "Applied test plan")) })).toString()
+        coach.beginInteraction(id, "controls_exchange", request); coach.saveExchange(id, "controls_exchange", request, response)
+        return coach to coach.apply(id, "controls_exchange", 0, request)
+    }
+    @Test fun exportAttachesCoachContextProvenanceQuestionsAndActionIdentityThenWipeCascades() = runBlocking {
+        val id = history.create(HabitDraft("Private habit"))
+        val (coach, receipt) = seedCoach(id)
+        val out = ByteArrayOutputStream(); data.export { out }
+        val root = JSONObject(out.toString("UTF-8")); val exported = root.getJSONObject("coachHistory")
+        assertEquals(1, exported.getInt("storageVersion")); assertEquals(3, exported.getJSONArray("messages").length())
+        val cache = exported.getJSONArray("caches").getJSONObject(0)
+        assertEquals("controls_exchange", cache.getString("id")); assertEquals(64, cache.getString("catalogSha256").length)
+        assertEquals("EXISTING", cache.getJSONObject("request").getString("mode")); assertEquals(id, cache.getLong("habitId"))
+        assertEquals(receipt.id, exported.getJSONArray("actions").getJSONObject(0).getString("id"))
+        assertEquals("Applied test plan", history.record(id)!!.habit.planNote)
+        data.clear(); assertTrue(db.coachDao().allMessages().isEmpty()); assertTrue(db.coachDao().allCaches().isEmpty()); assertTrue(db.coachDao().allActions().isEmpty())
+        assertEquals(CoachUndoResult.UNAVAILABLE, coach.undo(receipt.id)); assertEquals(3, JSONObject(out.toString("UTF-8")).getJSONObject("coachHistory").getJSONArray("messages").length())
+    }
     @Test fun exportedVersionedFactsPreserveArchivedLegacyQuantityAndPendingHistories() = runBlocking {
         prefs.setUserName("Private person"); prefs.setOnboardingComplete(true); prefs.setReminder(true, 1200)
         val id = history.create(HabitDraft("Read", HabitSettings(HabitSchedule.Weekly(3), TrackingMode.Quantity(BigDecimal("5.00"), "pages")), cue = "after breakfast"))
@@ -84,7 +109,7 @@ class DataControlsTest {
         prefs.markDelivered(setOf("$id@${day.toEpochDay()}"))
         val out = ByteArrayOutputStream(); data.export { out }
         val text = out.toString("UTF-8"); val root = JSONObject(text)
-        assertEquals(1, root.getInt("formatVersion")); assertEquals(2, root.getInt("roomSchemaVersion"))
+        assertEquals(1, root.getInt("formatVersion")); assertEquals(3, root.getInt("roomSchemaVersion"))
         assertEquals("Private person", root.getJSONObject("settings").getString("userName"))
         val habit = root.getJSONArray("habits").getJSONObject(0)
         assertEquals(id, habit.getLong("id")); assertFalse(habit.isNull("archivedAt"))
@@ -92,7 +117,7 @@ class DataControlsTest {
         assertEquals("2.50", habit.getJSONArray("completions").getJSONObject(0).getString("quantityAmount"))
         assertEquals("5.00", habit.getJSONArray("trackingHistory").getJSONObject(0).getString("target"))
         assertEquals(2, habit.getJSONArray("trackingHistory").length())
-        assertEquals(0, root.getJSONObject("coachHistory").getInt("storageVersion"))
+        assertEquals(1, root.getJSONObject("coachHistory").getInt("storageVersion"))
         assertFalse(text.contains("reminder_delivered")); assertFalse(text.contains("reset_pending"))
         assertEquals(1, db.historyDao().records().size)
     }
