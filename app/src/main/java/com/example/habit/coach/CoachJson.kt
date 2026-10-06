@@ -53,6 +53,9 @@ object CoachJson {
         require(this is Map<*, *> && this.keys == keys.toSet()) { "Unexpected/missing fields" }
         @Suppress("UNCHECKED_CAST") return this as Map<String, Any?>
     }
+    /** Provider envelopes may include metadata, but still reject duplicate/lenient JSON. */
+    internal fun providerObject(text: String): Map<*, *> =
+        parse(text, 65_536) as? Map<*, *> ?: error("Invalid provider envelope")
     private fun Any?.list(): List<Any?> { require(this is List<*>); return this }
     private fun Any?.text(): String { require(this is String); return this }
     private fun Any?.integer(): Int {

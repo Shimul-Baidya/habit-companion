@@ -100,7 +100,9 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
                             "CONFLICT" -> "Later edits kept · ${state.subtitle}"
                             null -> state.subtitle
                             else -> state.receipt.confirmation
-                        }, style = HabitTheme.type.caption, color = colors.onSurfaceMuted) }
+                        }, style = HabitTheme.type.caption, color = colors.onSurfaceMuted)
+                        Text("Google Gemini receives Coach context and questions. Free-tier data may be reviewed.",
+                            style = HabitTheme.type.caption, color = colors.onSurfaceMuted, modifier = Modifier.padding(top = 8.dp).testTag("coach-transmission")) }
                 }
             } }
             item("status") {
@@ -185,8 +187,9 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
     }
     if (privacy) AlertDialog(onDismissRequest = { privacy = false }, title = { Text("Coach privacy") },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(if (state.planning) "When connected, the Coach receives this unsaved draft's name, schedule, tracking target/unit, current habit count, your question and matched strategies. It never creates a habit automatically. Questions may include personal details you choose to enter."
-                else "When connected, the Coach receives only this habit's measured summary, your question and matched strategies. Habit names, local IDs, other habits and the full conversation are excluded. Questions may include personal details you choose to enter.")
+            Text(if (state.planning) "Google Gemini receives this unsaved draft's name, schedule, tracking target/unit, current habit count, your question and matched strategies. It never creates a habit automatically. Questions may include personal details you choose to enter."
+                else "Google Gemini receives only this habit's measured summary, your question and matched strategies. Habit names, local IDs, other habits and the full conversation are excluded. Questions may include personal details you choose to enter.")
+            Text("This academic demo uses Google’s free Gemini API tier. Google may use inputs and replies to improve its products; human reviewers may read them. Avoid sensitive, confidential or personal information in draft names, units and questions. Habit records and Coach history stay on this device; each interaction sends only the permitted context above. No full conversation is sent automatically.")
             if (state.strategies.isNotEmpty()) Text("Strategy sources", style = HabitTheme.type.title)
             state.strategies.forEach { admitted ->
                 Text(admitted.card.title, style = HabitTheme.type.body)

@@ -161,7 +161,10 @@ class CoachWorkflowUiTest {
         val id = habit(); val vm = model(id); screen(vm)
         assertEquals(1, calls.get()); assertEquals(3, vm.state.value.response!!.value.suggestions.size)
         for (index in 0..2) { scroll("coach-card-$index"); compose.onNodeWithTag("coach-card-$index").assertIsDisplayed() }
+        compose.onNodeWithTag("coach-list").performScrollToIndex(0)
+        compose.onNodeWithTag("coach-transmission").assertIsDisplayed()
         scroll("coach-card-0"); compose.onNodeWithContentDescription("Coach privacy and strategy sources").performClick()
+        compose.onNodeWithText("This academic demo uses Google", substring = true).assertExists()
         compose.onAllNodesWithText("Supplied attribution:", substring = true).assertCountEquals(3); capture("strategy-source", true)
         back(); assertEquals("", runBlocking { history.record(id)!!.habit.planNote }); assertNull(vm.state.value.receipt)
         compose.activityRule.scenario.onActivity { WindowInsetsControllerCompat(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime()) }

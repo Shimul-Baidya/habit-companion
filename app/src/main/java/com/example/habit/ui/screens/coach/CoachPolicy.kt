@@ -21,7 +21,7 @@ internal fun CoachFailure.headline(): String = when (this) {
 }
 internal fun CoachFailure.explanation(): String = when (this) {
     CoachFailure.Disabled -> "Enable Coach suggestions in Profile."
-    CoachFailure.Unconfigured -> "Coach suggestions are not configured on this installation yet."
+    CoachFailure.Unconfigured -> "The Coach connection is unavailable on this installation."
     CoachFailure.Offline -> "Suggestions need a connection. Try again when you're online."
     CoachFailure.Timeout -> "The request timed out. You can retry here."
     is CoachFailure.RateLimited -> "Please wait before trying again."

@@ -137,7 +137,7 @@ fun ProfileScreen(onSelectTab: (HomeTab) -> Unit,
                     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("Coach suggestions", style = HabitTheme.type.title, color = HabitTheme.colors.onSurface)
-                            Text("Sends permitted context and your question when connected", style = HabitTheme.type.caption, color = HabitTheme.colors.onSurfaceMuted)
+                            Text("Google Gemini receives Coach context and questions; free-tier data may be reviewed", style = HabitTheme.type.caption, color = HabitTheme.colors.onSurfaceMuted)
                         }
                         Switch(prefs?.coachEnabled ?: false, viewModel::coach, enabled = enabled,
                             modifier = Modifier.semantics { contentDescription = "Coach suggestions" }.testTag("coach-setting"))

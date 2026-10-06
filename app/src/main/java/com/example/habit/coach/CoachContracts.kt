@@ -164,16 +164,7 @@ object CoachResponseValidator {
         require(response.suggestions.size == 3 && response.suggestions.map { it.strategyId }.distinct().size == 3)
         require(request.strategies.size == 3 && request.strategies.all { catalog.byId[it.card.id] == it.card })
         require(response.reading.facts.size in 1..2 && response.reading.facts.distinct().size == response.reading.facts.size)
-        val allowed = when (val c = request.context) {
-            is CoachContext.Planning -> setOf(ReadingFact.PLANNING_DRAFT)
-            is CoachContext.Existing -> buildSet {
-                if (c.summary.completed > 0) add(ReadingFact.RECENT_COMPLETIONS)
-                if (c.summary.missed > 0) add(ReadingFact.RECENT_MISSES)
-                if (c.summary.pending > 0) add(ReadingFact.OPEN_EXPECTATIONS)
-                if (c.summary.partialQuantityDays > 0) add(ReadingFact.PARTIAL_QUANTITIES)
-                if (c.summary.attention == HabitAttention.AT_RISK) add(ReadingFact.ATTENTION)
-            }
-        }
+        val allowed = allowedFacts(request.context)
         require(response.reading.facts.all { it in allowed })
         if (response.reading.possibleBarrier == PossibleBarrier.TOO_MANY_NEW_HABITS) require(request.context is CoachContext.Planning)
         response.suggestions.forEach { s ->
@@ -184,6 +175,17 @@ object CoachResponseValidator {
         }
         ResponseResult.Valid(ValidatedCoachResponse(response, request.context))
     } catch (_: IllegalArgumentException) { ResponseResult.Invalid }
+
+    internal fun allowedFacts(context: CoachContext): Set<ReadingFact> = when (val c = context) {
+            is CoachContext.Planning -> setOf(ReadingFact.PLANNING_DRAFT)
+            is CoachContext.Existing -> buildSet {
+                if (c.summary.completed > 0) add(ReadingFact.RECENT_COMPLETIONS)
+                if (c.summary.missed > 0) add(ReadingFact.RECENT_MISSES)
+                if (c.summary.pending > 0) add(ReadingFact.OPEN_EXPECTATIONS)
+                if (c.summary.partialQuantityDays > 0) add(ReadingFact.PARTIAL_QUANTITIES)
+                if (c.summary.attention == HabitAttention.AT_RISK) add(ReadingFact.ATTENTION)
+            }
+        }
 
     private fun validateAction(action: CoachAction, context: CoachContext) {
         when (action) {
@@ -212,8 +214,11 @@ object CoachResponseValidator {
         }
     }
     private fun validateStrategyAction(action: CoachAction, card: StrategyCard) {
+        require(strategySupports(action, card))
+    }
+    internal fun strategySupports(action: CoachAction, card: StrategyCard): Boolean {
         val tags = card.tags.toSet()
-        val relevant = when (action) {
+        return when (action) {
             CoachAction.AdviceOnly, is CoachAction.Plan -> true
             is CoachAction.Target -> tags.any { it in setOf("simplicity", "starting", "scaling", "habit-shaping", "two-minute-rule") }
             is CoachAction.Schedule -> tags.any { it in setOf("scheduling", "timeboxing", "routines", "recovery", "consistency", "planning") }
@@ -221,7 +226,6 @@ object CoachResponseValidator {
             is CoachAction.Reminder -> tags.any { it in setOf("reminders", "cues", "triggers", "scheduling") }
             is CoachAction.NewHabitCount -> tags.any { it in setOf("planning", "simplicity") }
         }
-        require(relevant)
     }
 }
 

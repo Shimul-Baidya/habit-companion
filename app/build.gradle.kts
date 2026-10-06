@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Private academic demo only. The key is extractable from the APK; never publish it.
+// Provider configuration stays outside the Coach UI/domain contract.
+val demoGeminiKey = providers.environmentVariable("GEMINI_API_KEY").orElse(
+    providers.fileContents(rootProject.layout.projectDirectory.file(".env")).asText
+        .map { text -> Properties().apply { load(text.reader()) }.getProperty("GEMINI_API_KEY", "") }
+).orElse("").get().trim()
+fun buildString(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r") + "\""
 
 // The supplied resource is the only editable catalog. Sync packages its exact bytes.
 abstract class SyncCoachAssets : DefaultTask() {
@@ -34,6 +44,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GEMINI_API_KEY", buildString(demoGeminiKey))
+        buildConfigField("String", "GEMINI_MODEL", buildString("gemini-3.5-flash-lite"))
     }
 
     buildTypes {
@@ -52,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
 }

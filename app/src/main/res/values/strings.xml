@@ -111,7 +111,7 @@
     <string name="form_unit_error">Enter a unit of up to 40 characters.</string>
     <string name="form_history_help">Past records keep their original settings. Tracking and targets change tomorrow. Schedules change tomorrow, or next Monday when changing to or from Weekly.</string>
     <string name="form_coach_title">Not sure how to make this stick?</string>
-    <string name="form_coach_body">The Coach will size it and anchor it to your day.</string>
+    <string name="form_coach_body">Get a starting plan with Google Gemini. Sends draft context; free-tier data may be reviewed.</string>
     <string name="form_coach_not_connected">Coach is not connected yet. Your draft stays here.</string>
     <string name="form_coach_disabled">Coach is disabled in settings. Your draft stays here.</string>
     <string name="form_save">Save changes</string>

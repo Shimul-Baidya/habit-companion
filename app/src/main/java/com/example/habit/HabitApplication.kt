@@ -5,6 +5,7 @@ import android.content.Context
 import com.example.habit.coach.StrategyRepository
 import com.example.habit.coach.CoachService
 import com.example.habit.coach.UnconfiguredCoachService
+import com.example.habit.coach.GeminiCoachService
 import com.example.habit.data.controls.*
 import com.example.habit.reminders.*
 import kotlinx.coroutines.launch
@@ -30,7 +31,10 @@ class AppContainer(context: Context) {
         val bytes = it.readBytes(); require(bytes.size <= 262_144); bytes
     } } }
     val coachConnection by lazy { com.example.habit.coach.CoachConnection(context.applicationContext) }
-    val coachService: CoachService by lazy { UnconfiguredCoachService() }
+    val coachService: CoachService by lazy {
+        if (BuildConfig.GEMINI_API_KEY.isBlank()) UnconfiguredCoachService()
+        else GeminiCoachService(BuildConfig.GEMINI_API_KEY, BuildConfig.GEMINI_MODEL)
+    }
     private val gate = DataGate()
     private val database: HabitDatabase by lazy { HabitDatabase.build(context) }
 
