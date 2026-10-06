@@ -3,6 +3,8 @@ package com.example.habit.data.local
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * One habit. `archivedAt` is what SCR-14 sets when a habit is archived: the row leaves
@@ -18,14 +20,23 @@ data class HabitEntity(
     @ColumnInfo(name = "color_key") val colorKey: String = "primary",
     val frequency: Frequency = Frequency.DAILY,
     /**
-     * Bitmask of scheduled weekdays, bit 0 = Monday. Only meaningful for
-     * [Frequency.WEEKLY] and [Frequency.CUSTOM]; DAILY schedules all seven.
+     * Legacy projection, bit 0 = Monday. Authoritative dated schedules live in
+     * schedule_history; v1 Weekly masks retain Custom historical semantics.
      */
     @ColumnInfo(name = "scheduled_days") val scheduledDays: Int = ALL_DAYS,
-    /** Times per scheduled day. The Coach shrinks this rather than resetting a streak. */
+    /** Preserved v1 metadata; targets now live in dated tracking_history. */
     val goal: Int = 1,
     @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "archived_at") val archivedAt: Long? = null,
+    @ColumnInfo(name = "created_epoch_day", defaultValue = "0")
+    val createdEpochDay: Long = Instant.ofEpochMilli(createdAt).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay(),
+    @ColumnInfo(name = "archived_epoch_day") val archivedEpochDay: Long? = null,
+    @ColumnInfo(defaultValue = "''") val cue: String = "",
+    @ColumnInfo(defaultValue = "''") val anchor: String = "",
+    @ColumnInfo(name = "plan_note", defaultValue = "''") val planNote: String = "",
+    /** Null inherits global configuration; false explicitly disables it. */
+    @ColumnInfo(name = "reminder_enabled") val reminderEnabled: Boolean? = null,
+    @ColumnInfo(name = "reminder_minute") val reminderMinute: Int? = null,
 ) {
     companion object {
         const val ALL_DAYS = 0b111_1111

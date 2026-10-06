@@ -36,7 +36,7 @@ object HistoryCalculator {
         val logs = history.logs.associateBy { it.date }
         val result = mutableListOf<ScheduledOccurrence>()
         var date = history.createdOn
-        val end = minOf(today, history.archivedOn?.minusDays(1) ?: today)
+        val end = minOf(today, history.archivedOn ?: today)
         while (date <= end) {
             val settings = requireNotNull(history.settingsOn(date))
             when (val schedule = settings.schedule) {
@@ -73,6 +73,12 @@ object HistoryCalculator {
                 else -> {
                     if (CompletionRules.isScheduled(schedule, date)) {
                         val value = logs[date]?.value
+                        // Archive-day facts survive, but no unfinished archive-day expectation is due.
+                        if (date == history.archivedOn &&
+                            (value == null || !CompletionRules.isComplete(settings.tracking, value))) {
+                            date = date.plusDays(1)
+                            continue
+                        }
                         val outcome = when {
                             value != null && CompletionRules.isComplete(settings.tracking, value) -> OccurrenceOutcome.COMPLETED
                             date == today -> OccurrenceOutcome.PENDING

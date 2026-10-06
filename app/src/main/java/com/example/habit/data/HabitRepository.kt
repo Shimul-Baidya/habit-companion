@@ -17,6 +17,7 @@ import java.time.LocalDate
 class HabitRepository(
     private val habitDao: HabitDao,
     private val completionDao: CompletionDao,
+    private val history: HabitHistoryRepository,
 ) {
 
     /**
@@ -47,14 +48,12 @@ class HabitRepository(
 
     /** SCR-04 element 8: one tap toggles today. */
     suspend fun toggleToday(habit: HabitEntity, today: LocalDate, done: Boolean) {
-        if (done) {
-            completionDao.upsert(CompletionEntity(habitId = habit.id, epochDay = today.toEpochDay()))
-        } else {
-            completionDao.clear(habit.id, today.toEpochDay())
-        }
+        // Until the new Home state is wired in chunk 03, ignore legacy rest-day controls.
+        if (!StreakCalculator.isScheduled(habit, today) || habit.archivedAt != null) return
+        history.correct(habit.id, today, com.example.habit.domain.CompletionValue.Binary(done))
     }
 
-    suspend fun create(habit: HabitEntity): Long = habitDao.insert(habit)
+    suspend fun create(habit: HabitEntity): Long = history.createLegacy(habit)
 
     private companion object {
         /** Longer than any streak Home renders, short of loading the entire history. */

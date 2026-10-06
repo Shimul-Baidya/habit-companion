@@ -25,7 +25,7 @@ class NewHabitViewModel(private val habits: HabitRepository) : ViewModel() {
 
     companion object {
         val Factory = containerFactory {
-            NewHabitViewModel(HabitRepository(it.habitDao, it.completionDao))
+            NewHabitViewModel(it.habits)
         }
     }
 }

@@ -27,7 +27,11 @@ import androidx.room.Index
 data class CompletionEntity(
     @ColumnInfo(name = "habit_id") val habitId: Long,
     @ColumnInfo(name = "epoch_day") val epochDay: Long,
-    /** How many times it was logged that day; compared against the habit's goal. */
+    /** Preserved v1 metadata; never used as a measured quantity. */
     val count: Int = 1,
     @ColumnInfo(name = "completed_at") val completedAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "tracking_mode", defaultValue = "'BINARY'") val trackingMode: String = "BINARY",
+    /** Exact decimal text, never a SQLite REAL or a guessed conversion from legacy count. */
+    @ColumnInfo(name = "quantity_amount") val quantityAmount: String? = null,
+    @ColumnInfo(name = "quantity_unit") val quantityUnit: String? = null,
 )

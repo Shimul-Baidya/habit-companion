@@ -1,0 +1,308 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "5065094606d219e9fe5ad4424a810453",
+    "entities": [
+      {
+        "tableName": "habits",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `icon_key` TEXT NOT NULL, `color_key` TEXT NOT NULL, `frequency` TEXT NOT NULL, `scheduled_days` INTEGER NOT NULL, `goal` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `archived_at` INTEGER, `created_epoch_day` INTEGER NOT NULL DEFAULT 0, `archived_epoch_day` INTEGER, `cue` TEXT NOT NULL DEFAULT '', `anchor` TEXT NOT NULL DEFAULT '', `plan_note` TEXT NOT NULL DEFAULT '', `reminder_enabled` INTEGER, `reminder_minute` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iconKey",
+            "columnName": "icon_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colorKey",
+            "columnName": "color_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frequency",
+            "columnName": "frequency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduledDays",
+            "columnName": "scheduled_days",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "goal",
+            "columnName": "goal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archivedAt",
+            "columnName": "archived_at",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdEpochDay",
+            "columnName": "created_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "archivedEpochDay",
+            "columnName": "archived_epoch_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cue",
+            "columnName": "cue",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "anchor",
+            "columnName": "anchor",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "planNote",
+            "columnName": "plan_note",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "reminderEnabled",
+            "columnName": "reminder_enabled",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "reminderMinute",
+            "columnName": "reminder_minute",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "completions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`habit_id` INTEGER NOT NULL, `epoch_day` INTEGER NOT NULL, `count` INTEGER NOT NULL, `completed_at` INTEGER NOT NULL, `tracking_mode` TEXT NOT NULL DEFAULT 'BINARY', `quantity_amount` TEXT, `quantity_unit` TEXT, PRIMARY KEY(`habit_id`, `epoch_day`), FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trackingMode",
+            "columnName": "tracking_mode",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'BINARY'"
+          },
+          {
+            "fieldPath": "quantityAmount",
+            "columnName": "quantity_amount",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "quantityUnit",
+            "columnName": "quantity_unit",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "habit_id",
+            "epoch_day"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_completions_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_completions_epoch_day` ON `${TABLE_NAME}` (`epoch_day`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "schedule_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`habit_id` INTEGER NOT NULL, `effective_day` INTEGER NOT NULL, `kind` TEXT NOT NULL, `weekday_mask` INTEGER NOT NULL, `quota` INTEGER, PRIMARY KEY(`habit_id`, `effective_day`), FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveDay",
+            "columnName": "effective_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekdayMask",
+            "columnName": "weekday_mask",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quota",
+            "columnName": "quota",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "habit_id",
+            "effective_day"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tracking_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`habit_id` INTEGER NOT NULL, `effective_day` INTEGER NOT NULL, `mode` TEXT NOT NULL, `target` TEXT, `unit` TEXT, PRIMARY KEY(`habit_id`, `effective_day`), FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveDay",
+            "columnName": "effective_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "target",
+            "columnName": "target",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "habit_id",
+            "effective_day"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5065094606d219e9fe5ad4424a810453')"
+    ]
+  }
+}

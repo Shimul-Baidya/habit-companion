@@ -97,7 +97,7 @@ class HomeViewModel(
         private const val STOP_TIMEOUT_MS = 5_000L
 
         val Factory = containerFactory {
-            HomeViewModel(HabitRepository(it.habitDao, it.completionDao), it.settings)
+            HomeViewModel(it.habits, it.settings)
         }
     }
 }

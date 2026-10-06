@@ -158,4 +158,6 @@ Cover binary/quantity behaviour; Daily/Weekly/Custom schedules; historical edits
 
 Run compilation and affected tests for each implementation chunk. Run relevant instrumentation/device checks when the environment supports them; if it does not, record exactly what remains unverified. Final integration also includes lint and a full flow/visual check. Never describe static inspection, a mock response or an unexecuted test as a verified runtime result.
 
+Physical-device tests must retain the installed app: keep `android.injected.androidTest.leaveApksInstalledAfterRun=true` in Gradle configuration. Use isolated test databases/preferences; do not clear real user data or enable uninstalling incompatible APKs. Check that the debug app remains installed after device tests.
+
 At each chunk boundary, update the plan's status and concise handoff: changes, checks actually run/results, unresolved issues or limitations, and the next chunk. Keep incomplete work marked incomplete. Later chats should resume from this record, not rediscover the project or repeat completed checks without a reason.

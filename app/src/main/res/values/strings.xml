@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">HabitFlow</string>
+    <string name="app_name">Habit Companion</string>
 
     <!-- SCR-01 Splash -->
     <string name="splash_tagline">Habits stay on the device</string>
-    <string name="splash_brand_mark">HabitFlow</string>
+    <string name="splash_brand_mark">Habit Companion</string>
 
     <!-- SCR-02 Onboarding -->
     <string name="onboarding_skip">Skip</string>
@@ -13,13 +13,13 @@
     <string name="onboarding_pane_indicator">Pane %1$d of %2$d</string>
 
     <string name="onboarding_title_1">One tap a day</string>
-    <string name="onboarding_body_1">HabitFlow asks for a single tap per habit. Tap the ring when you have done it — that is the whole interaction.</string>
+    <string name="onboarding_body_1">Habit Companion makes daily tracking simple. Tap the ring for binary habits, or enter an amount for quantity habits.</string>
 
     <string name="onboarding_title_2">Watch the chain grow</string>
     <string name="onboarding_body_2">Every tap extends a streak. The longer the chain gets, the more it is worth protecting, and the app keeps it in front of you.</string>
 
     <string name="onboarding_title_3">A Coach that reads the pattern</string>
-    <string name="onboarding_body_3">When a streak breaks, the Coach looks at the last 30 days and suggests a smaller goal. Your habits never leave this device.</string>
+    <string name="onboarding_body_3">The Coach uses a limited pattern summary to suggest a plan. Habits are stored on this device; using the Coach sends the permitted context and your questions to an AI service.</string>
 
     <!-- Greeting, shared by SCR-03 and SCR-04 -->
     <string name="greeting_morning">Good morning</string>

@@ -226,13 +226,28 @@ class HistoryCalculatorTest {
         assertThrows(IllegalArgumentException::class.java) { metrics(history(days = listOf(1)), 0) }
         assertThrows(IllegalArgumentException::class.java) { history(days = listOf(-1)) }
         assertThrows(IllegalArgumentException::class.java) { history(HabitSchedule.Custom(setOf(DayOfWeek.MONDAY)), listOf(1)) }
-        assertThrows(IllegalArgumentException::class.java) { history(days = listOf(2), archived = monday.plusDays(2)) }
+        assertThrows(IllegalArgumentException::class.java) { history(days = listOf(3), archived = monday.plusDays(2)) }
     }
 
     @Test fun binaryFalseIsPendingTodayAndMissedAfterClose() {
         val h = history().copy(logs = listOf(HabitLog(monday, CompletionValue.Binary(false))))
         assertEquals(1, metrics(h, 0).pending)
         assertEquals(1, metrics(h, 1).missed)
+    }
+
+    @Test fun archiveDayAchievementsSurviveWithoutInventingWeeklyShortfalls() {
+        val h = history(HabitSchedule.Weekly(3), listOf(6), archived = monday.plusDays(6))
+        val result = metrics(h, 8)
+        assertEquals(1, result.completed)
+        assertEquals(0, result.missed)
+        assertEquals(0, result.pending)
+        assertEquals(1, metrics(history(days = listOf(0), archived = monday), 1).completed)
+        val partial = HabitHistory(monday, listOf(EffectiveSettings(monday,
+            HabitSettings(HabitSchedule.Weekly(3), TrackingMode.Quantity(BigDecimal.TEN, "pages")))),
+            listOf(HabitLog(monday.plusDays(6), CompletionValue.Quantity(BigDecimal.ONE, "pages"))), monday.plusDays(6))
+        assertEquals(0, metrics(partial, 8).missed)
+        assertEquals(1, partial.logs.size)
+        assertFalse(CompletionRules.canCorrect(h, monday.plusDays(6), monday.plusDays(8)))
     }
 
     @Test fun settingsChangesHaveSafeEffectiveDatesAndKeepUnrelatedFields() {

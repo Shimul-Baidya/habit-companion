@@ -44,7 +44,7 @@ data class HabitSettings(val schedule: HabitSchedule, val tracking: TrackingMode
 data class EffectiveSettings(val from: LocalDate, val settings: HabitSettings)
 data class HabitLog(val date: LocalDate, val value: CompletionValue)
 
-/** Archive date is exclusive: archive stops new expectations on that date. */
+/** Archive stops new expectations; logs already made on the archive date remain facts. */
 data class HabitHistory(
     val createdOn: LocalDate,
     val settings: List<EffectiveSettings>,
@@ -64,7 +64,9 @@ data class HabitHistory(
         require(archivedOn == null || archivedOn >= createdOn)
         require(logs.map { it.date }.distinct().size == logs.size) { "One log per date" }
         logs.forEach { log ->
-            require(isActiveOn(log.date)) { "Log outside the habit's active dates" }
+            require(isActiveOn(log.date) || (log.date == archivedOn && log.date >= createdOn)) {
+                "Log outside the habit's active dates"
+            }
             val historical = requireNotNull(settingsOn(log.date))
             require(CompletionRules.isScheduled(historical.schedule, log.date)) { "Log on a rest date" }
             CompletionRules.isComplete(historical.tracking, log.value)

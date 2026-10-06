@@ -27,10 +27,6 @@ interface HabitDao {
     @Update
     suspend fun update(habit: HabitEntity)
 
-    /** SCR-14 archive: the row leaves Home, the history stays. */
-    @Query("UPDATE habits SET archived_at = :at WHERE id = :id")
-    suspend fun archive(id: Long, at: Long = System.currentTimeMillis())
-
     /** SCR-14 delete. Cascades to completions — irreversible, as the dialog says. */
     @Delete
     suspend fun delete(habit: HabitEntity)

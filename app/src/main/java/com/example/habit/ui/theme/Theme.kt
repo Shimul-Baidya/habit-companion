@@ -10,7 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 
 /**
- * HabitFlow ships light and dark from the F-01 token set. Dynamic colour is deliberately
+ * Habit Companion ships light and dark from the F-01 token set. Dynamic colour is deliberately
  * off: the spec resolves every colour through a named token, and a wallpaper-derived
  * palette would break that contract.
  */
