@@ -24,11 +24,12 @@ fun SystemBarIcons(lightIcons: Boolean) {
         val controller = WindowInsetsControllerCompat(window, view)
         // The platform flag is inverted: "light appearance bars" means dark icons.
         val previous = controller.isAppearanceLightStatusBars
+        val previousNavigation = controller.isAppearanceLightNavigationBars
         controller.isAppearanceLightStatusBars = !lightIcons
         controller.isAppearanceLightNavigationBars = !lightIcons
         onDispose {
             controller.isAppearanceLightStatusBars = previous
-            controller.isAppearanceLightNavigationBars = previous
+            controller.isAppearanceLightNavigationBars = previousNavigation
         }
     }
 }

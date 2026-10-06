@@ -12,7 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import com.example.habit.ui.navigation.HabitNavHost
-import com.example.habit.ui.theme.HabitTheme
+import com.example.habit.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
     private val dates get() = (application as HabitApplication).container.dates
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
         // Every screen draws under the system bars; each one applies its own insets.
         enableEdgeToEdge()
         setContent {
-            HabitTheme {
+            AppTheme {
                 HabitNavHost(modifier = Modifier.fillMaxSize())
             }
         }

@@ -21,7 +21,15 @@ enum class ThemeMode { LIGHT, DARK, SYSTEM }
  * Preferences live in DataStore; counts live in Room (SCR-15). Every setting writes on
  * change — there is no save button anywhere in the app.
  */
-class SettingsRepository(private val store: DataStore<Preferences>) {
+interface ProfileSettings {
+    val configuration: Flow<SettingsRepository.Configuration>
+    suspend fun setUserName(name: String)
+    suspend fun setThemeMode(mode: ThemeMode)
+    suspend fun setWeekStart(day: DayOfWeek)
+    suspend fun setCoachEnabled(enabled: Boolean)
+}
+
+class SettingsRepository(private val store: DataStore<Preferences>) : ProfileSettings {
     constructor(context: Context) : this(context.settingsStore)
 
     data class Configuration(
@@ -34,7 +42,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val reminderMinute: Int = 20 * 60,
     )
 
-    val configuration: Flow<Configuration> = store.data.map { prefs ->
+    override val configuration: Flow<Configuration> = store.data.map { prefs ->
         Configuration(prefs[Keys.ONBOARDING_COMPLETE] ?: false, prefs[Keys.USER_NAME] ?: "",
             prefs[Keys.THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             prefs[Keys.WEEK_START]?.let { runCatching { DayOfWeek.of(it) }.getOrNull() } ?: DayOfWeek.MONDAY,
@@ -46,8 +54,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     val reminderEnabled: Flow<Boolean> = configuration.map { it.reminderEnabled }
     val reminderMinute: Flow<Int> = configuration.map { it.reminderMinute }
 
-    suspend fun setWeekStart(day: DayOfWeek) { store.edit { it[Keys.WEEK_START] = day.value } }
-    suspend fun setCoachEnabled(enabled: Boolean) { store.edit { it[Keys.COACH_ENABLED] = enabled } }
+    override suspend fun setWeekStart(day: DayOfWeek) { store.edit { it[Keys.WEEK_START] = day.value } }
+    override suspend fun setCoachEnabled(enabled: Boolean) { store.edit { it[Keys.COACH_ENABLED] = enabled } }
     suspend fun setReminder(enabled: Boolean, minute: Int) {
         require(minute in 0..1439)
         store.edit { it[Keys.REMINDER_ENABLED] = enabled; it[Keys.REMINDER_MINUTE] = minute }
@@ -69,11 +77,11 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         store.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
     }
 
-    suspend fun setUserName(name: String) {
+    override suspend fun setUserName(name: String) {
         store.edit { it[Keys.USER_NAME] = name }
     }
 
-    suspend fun setThemeMode(mode: ThemeMode) {
+    override suspend fun setThemeMode(mode: ThemeMode) {
         store.edit { it[Keys.THEME_MODE] = mode.name }
     }
 

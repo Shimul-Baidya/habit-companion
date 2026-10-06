@@ -1,6 +1,6 @@
 # Habit Companion implementation handoff
 
-Updated 6 October 2026 after chunk 06. Workspace: `/home/shimul/AndroidStudioProjects/Habit`.
+Updated 6 October 2026 after completed chunk 07 implementation and verification. Workspace: `/home/shimul/AndroidStudioProjects/Habit`.
 
 ## Start here
 
@@ -9,17 +9,27 @@ Updated 6 October 2026 after chunk 06. Workspace: `/home/shimul/AndroidStudioPro
 3. Inspect current code and `git status --short`; the files, not this handoff alone, establish the current implementation.
 4. Read relevant supplied screen/flow specifications and mockups before UI changes. `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` maps sources; old proposals yield to the approved owner decisions.
 
-**Chunks 01–06 are complete and verified. Chunk 07 is proposed, awaiting owner approval.** Do not automatically implement all remaining chunks. Complete one authorised chunk, record verification, provide a one-line commit message and ask permission for the next. The owner stages/commits/pushes. Do not perform Git mutations or disturb pre-existing changes/staging. If command execution requires permission, give its purpose and exact command.
+**Chunks 01–07 are complete and verified. Chunk 08 is proposed and awaits owner approval.** Do not automatically implement all remaining chunks. Complete one authorised chunk, record verification, provide a one-line commit message and ask permission for the next. The owner stages/commits/pushes. Do not perform Git mutations or disturb pre-existing changes/staging. If command execution requires permission, give its purpose and exact command.
 
 ## What exists
 
 - Pure domain: `domain/HabitHistory.kt`, `HabitSettingChange.kt`, `HistoryCalculator.kt`, `StatsAggregator.kt`. Daily/Custom scheduled days and Weekly quota slots, dated binary/decimal quantity expectations, eligibility, risk/recovery and unlimited historical streaks are shared rules. Read the approved Weekly contract, not the old review proposal.
 - Persistence: Room v2 in `data/local/`, exported schemas under `app/schemas/`, registered data-preserving v1→v2 migration. Keep the database filename **habitflow.db** and old preference keys despite public Habit Companion branding. Schedule/tracking histories are separate. No destructive migration fallback, cloud database or PostgreSQL server.
-- `HabitHistoryRepository` atomically creates/edits/corrects/logs/archives/deletes. Archive has field-scoped five-second Undo; deletion cascades. `HabitRepository` supplies atomic complete histories to `HabitSnapshot`/shared aggregation. DataStore handles existing identity/onboarding/theme plus week start, Coach enablement and reminder configuration. Theme/reminder screen/service wiring remains later work.
+- `HabitHistoryRepository` atomically creates/edits/corrects/logs/archives/deletes. Archive has field-scoped five-second Undo; deletion cascades. `HabitRepository` supplies atomic complete histories to `HabitSnapshot`/shared aggregation. DataStore handles existing identity/onboarding/theme plus week start, Coach enablement and reminder configuration. Theme/Profile presentation is wired in chunk 07; reminder service wiring remains chunk 08 work.
 - `DeviceClock`/`DateMonitor`: midnight, resume, time/date/zone changes and DST-aware refresh. Today's logging rechecks date transactionally. A clock rollback evaluates as-of without deleting later recorded facts. Home separates loading, empty, no-due, all-done, read error/retry and write error; cached data is retained after read failure with stale writes disabled.
 - Branding/backup: public name Habit Companion, local-only Room/DataStore, backup disabled and storage domains excluded by legacy/modern backup/extraction XML. No network Coach yet. Actual OEM backup/restore transports have not been exercised.
 
 Paths above are relative to `app/src/main/java/com/example/habit/` unless stated otherwise.
+
+## Chunk 07 integration details
+
+- `ui/screens/progress/`: real SCR-12/13 with one primitive saved Week/Month selection, retained list position, weighted consistency/done and all-time best. Seven daily required-completion bars and actual 4–6 clipped monthly consistency bars reuse `HabitSnapshot`/`StatsAggregator`; pending/future/zero data stays honest. Bars animate 400ms with 40ms stagger; monthly values below 10% are omitted and values below 75% use lighter primary. Positive active top-streak rails exclude archives, preserve real occurrence units and open the existing detail route/caller. Names now reuse the Home/detail 300ms shared transition through the root animated scope.
+- `ui/screens/profile/`: real SCR-15 local identity/100dp initials avatar/inline name, active count and truthful earliest-history “tracking since” summary; lifetime best/completed/weighted consistency; Preferences/Coach/Data groups and scrollable lower controls. Blank names use Your profile/HC, input is trimmed, limited to 80 characters and excludes controls. Done/IME Done writes locally without a page-level Save; Cancel/Back applies no name change. Primitive state retains name editing/dialogs.
+- `ProfileSettings` is a narrow local setting port over the existing DataStore. Field-only writes guard repeated taps, await success, preserve unrelated settings and retain failed name/choice input. Statistics and preference observation remain independent so Room failure does not block available settings. Shared `SnapshotReader` retains cached facts and offers Retry without inventing an empty result; only date/week-start changes restart historical observation.
+- `ui/theme/AppTheme.kt`: Activity observes Light/Dark/Follow system immediately, including default system-bar appearance. Splash keeps its specific override; system-bar cleanup now restores each bar’s own previous flag. Theme read failure retains the confirmed mode and retries local reads; Profile exposes preference errors. Week-start choices update display calendars/charts without changing quota boundaries. Coach toggle uses the existing guarded setting; no service or outbound payload was added.
+- Reminder, export, destructive-clear and clear-Coach-history entries accurately explain their pending chunks; no fake save/export/clear occurs. Restore remains visibly disabled. The supplied palette, hierarchy, gutters and four tabs remain. Minimum accommodations include distinct >=48dp range targets, multiline chart units, fitted stat figures/equal card heights, growing/scrolling text and the explicit 100dp avatar overriding the smaller picture. The keyboard keeps inline name completion accessible.
+- Existing Room schema/database file, DataStore keys, source resources, New/Edit draft token/result contract and history remain unchanged. No production dependency, external Coach traffic, real-data reset or Git operation.
+- Verification: final full run passed 114 JVM/85 Pixel device tests; after the chart offset lint adjustment, all 114 JVM and 12 affected workflows passed again. Lint has zero errors/26 existing advisories. Final visual captures, retained installation and cold launch are verified. Visual QA corrected crowded month units/large-text figures; tests check visible glyph bounds and card alignment. See the verified-state section for reports and practical limits.
 
 ## Chunk 06 integration details
 
@@ -54,41 +64,38 @@ Paths above are relative to `app/src/main/java/com/example/habit/` unless stated
 
 ## Verified state
 
-Final functional command:
+Full verification command:
 
 ```sh
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:connectedDebugAndroidTest :app:lintDebug
 ```
 
-Passed: **104 JVM tests and 73 Pixel 7 Android 17 device tests; zero failures/errors/skips. Lint zero errors, 26 advisories.** Advisory locations concern existing dependency/API checks, redundant label, plural candidates and unused resources; none are in the new detail/management files. Reports: `app/build/test-results/testDebugUnitTest/`, `app/build/outputs/androidTest-results/connected/debug/`, `app/build/reports/lint-results-debug.xml`. `git diff --check` passed. The debug app remains installed, and final cold launch returned `Status: ok`, `LaunchState: COLD`.
+After the owner reconnected the Pixel, the full command passed **114 JVM tests and 85 Pixel 7 Android 17 tests, zero failures/errors/skips** on the integrated Progress shared-transition/month-label changes. An earlier rerun interrupted after 40 tests is superseded by this successful full run. A final chart-offset lambda adjustment removed a new lint advisory; the full command with `-Pandroid.testInstrumentationRunnerArguments.class=com.example.habit.ui.screens.insights.InsightWorkflowUiTest` then passed **114 JVM tests and all 12 affected device workflows** again. Lint has **zero errors, 26 existing advisories**. These are 85 unique device cases, with 12 rechecked.
 
-New coverage: calendar eligibility/date coverage/leap day, Weekly flexibility and quota outcomes, positive/neutral/attention facts and retained risk streak, binary/quantity dated corrections, partial/achieved/clear, concurrent corrections and rollback, stale expectation/log/date/archive/delete rejection, failed/read retry/repeated-save paths, primitive and Bundle/Parcel detail restoration with Room, month arrows/swipe, Home long press/Edit and detail Edit caller return, nested native dialog/sheet Back, archive retention/scoped Undo/expiry/restoration, delete cascade and safe Home/Progress removal. Existing migration/DataStore/privacy/domain/date/Home/form/launch/navigation tests passed.
+The debug package remains installed (`pm path com.example.habit`) and a final cold launch returned `Status: ok`. `android.injected.androidTest.leaveApksInstalledAfterRun=true` remains enabled. Tests used isolated databases/preferences; no clear or uninstall was performed.
 
-Inspected SCR-07/08/14 and FLOW-06/07/11 plus system-design p.3 against light healthy/dark attention 393 × 832dp, dark 360 × 640dp/font 1.5, scrolled calendar/legend, management sheet and historical quantity dialog. Calendar targets have explicit >=48dp/non-overlap assertions; the large-text dialog asserted native IME visibility and visible Save before persistence. Final QA captures live only in target `cache/chunk06-qa`, with inspection copies `/tmp/habit-chunk06-qa`; dialog PNGs omit the native keyboard itself. Previous Home/onboarding/form visual evidence remains in the plan.
+New coverage: weighted/zero/partial quantity and quota values, historical targets, archived/deleted contribution, long best streak, 4/5/6 buckets/week-start boundaries, date/correction observation, cached failure/retry, independent settings failures, repeated/pending/failed writes, local name validation/initials/trim/cancel, saved range/name primitives and Bundle/Parcel, real isolated DataStore reopen, live theme/system-bar/Follow system, native keyboard and inline Done, substantial saved root scroll and actual Progress/detail/caller Back, disabled Restore and deferred-operation truthfulness. The successful 85-test run also covered prior migrations/history/forms/Home/detail/privacy/navigation.
 
-Intermediate failures are recorded in the plan: unbounded weighted calendar measurement and reference-width swipe interception were fixed; visibility tests now scroll the outer list explicitly. Two earlier test activities lost foreground during physical navigation; logs showed navigation gestures and no Habit Companion crash. The owner authorised uninterrupted testing, and the final full suite passed. Forced viewport/font and saved-state reconstruction do not prove every OEM configuration or arbitrary OS kill during a write. The Progress caller test uses an isolated root port through the actual graph; actual Progress content is still chunk 07.
+Inspected supplied SCR-12/13/15, FLOW-12–14 and system-design p.4 against light 393 × 832dp and dark 360 × 640dp/font 1.5, scrolled rails/lower Profile, theme dialog and keyboard-visible inline name. Captures remain only in target `cache/chunk07-qa`, with inspection copies `/tmp/habit-chunk07-qa`; final monthly label placement and small/large-text figures were inspected after the last code change. Native keyboard is outside root PNGs, while tests explicitly assert visibility. Forced configurations/saved-state reconstruction do not prove every OEM setting or arbitrary process-death point. No external Coach traffic, real-data reset, source-resource/schema/dependency change or Git mutation occurred.
 
-Device tests keep `android.injected.androidTest.leaveApksInstalledAfterRun=true` and use isolated Room/preferences. Never uninstall or clear the real app to solve a test issue. Prior chunk 02 records an earlier uninstall correction; do not claim historical real data survived that earlier run. No Git mutation, source resource edit, schema/dependency change or outbound Coach traffic occurred in chunk 06.
+Reports: `app/build/test-results/testDebugUnitTest/` (114), `app/build/reports/chunk07-verification/full-device/` (preserved full 85), `app/build/outputs/androidTest-results/connected/debug/` (final affected 12), `app/build/reports/lint-results-debug.xml`. `git diff --check` passed. Gradle needs permission for the existing `~/.gradle` cache; ADB is `/media/shimul/New Volume1/Android/sdk/platform-tools/adb` (quote it). Give exact commands/purposes for escalations. Chunk 07 started with owner-staged chunk 06 changes; leave all Git operations to the owner and inspect current state on resume.
 
-Gradle needs permission for the existing `~/.gradle` cache; SDK/ADB is `/media/shimul/New Volume1/Android/sdk/platform-tools/adb` (quote the path). Give exact commands/purposes when escalation is required. The workspace was clean at startup; inspect current owner staging before later work.
+Suggested chunk 07 commit: `feat: complete Progress and Profile with reactive local preferences`
 
-Suggested chunk 06 commit: `feat: add historical habit detail corrections and safe management actions`
+## Next chunk 08 (only after approval)
 
-## Next chunk 07 (only after approval)
+After owner approval, read the reminder/Data sections of SCR-14/15 and relevant flows; reuse current profile/management entries and local histories.
 
-Read SCR-12/13/15, FLOW-12–14 and corresponding mockups. Reuse complete snapshots/aggregation and the working detail route/management operations.
-
-- Complete Progress Week/Month: correct weighted consistency/done/all-time best, seven daily bars and actual 4–6 monthly buckets, top-streak rails and detail entry, zero/partial states and specified chart motions.
-- Complete Profile: local identity/name/initials, lifetime values, Preferences/Coach/Data groups and scrollable lower controls. Observe Light/Dark/Follow system at the app theme; persist/reflect week start and Coach enablement.
-- Retain root/range/scroll state, four-tab navigation, Progress→detail→Back and immediate reactive changes. Reminder/export/wipe and Coach history entries stay accurately assigned to chunks 08/10; Restore stays disabled.
-- Verify shared-value fixtures, month/week-start boundaries, theme persistence without restart, name/settings errors and visual/keyboard/touch behavior. Update handoff/plan and ask before chunk 08.
+- Implement global daily reminder/time and per-habit inherited/override dialogs, notification availability/permissions, eligibility, cancellation/rescheduling and reboot/time/date handling with an appropriate local scheduler.
+- Implement deliberate versioned export through the system file picker and type-to-confirm coordinated local wipe, with consistent root/reset/scheduler state and failure/repeated-tap handling. Keep Restore disabled; Coach history attachment remains chunk 10.
+- Verify permission denial, Daily/Weekly/Custom/both modes, completed/archive/delete changes, export/cancel/failure, wipe/cancel/confirmation and post-wipe state using isolated test data. Do not wipe the owner's real data for QA.
 
 ## Remaining scope
 
-07 Progress/Profile and reactive settings/theme; 08 reminders/export/wipe; 09 actual 60-card strategy retrieval and strict Coach payload/action contract; 10 typed Apply + immediate local update/10-second scoped Undo/local history; 11 Coach screens/draft detours/root selection; 12 real external service; 13 end-to-end/design verification.
+08 reminders/export/wipe; 09 actual 60-card strategy retrieval and strict Coach payload/action contract; 10 typed Apply + immediate local update/10-second scoped Undo/local history; 11 Coach screens/draft detours/root selection; 12 real external service; 13 end-to-end/design verification.
 
 Owner prefers **Gemini Flash free API tier**. Credentials, exact model/version and applicable unpaid-service data-use terms require deliberate integration in chunk 12. Never silently configure external traffic or send full habits, local IDs, prohibited names, unrelated data or whole conversations. No new product decision is required for chunk 07.
 
 ## Prompt for a new chat
 
-> Continue Habit Companion in this project. Read AGENTS.md, HANDOFF.md, DOMAIN_BEHAVIOR.md and IMPLEMENTATION_PLAN.md, inspect current changes, and implement only chunk 07 faithfully. Verify each logical step and relevant device/visual behavior; preserve existing data, source resources and draft contracts. I handle Git operations. Finish with an updated handoff, a one-line commit message and a brief chunk 08 proposal, then ask permission. For permission-required commands, show the exact command and purpose.
+> After I authorise chunk 08, continue Habit Companion in this project. Read AGENTS.md, HANDOFF.md, DOMAIN_BEHAVIOR.md and IMPLEMENTATION_PLAN.md, inspect current changes, and implement only chunk 08 faithfully. Verify each logical step and relevant device/visual behavior; preserve existing data, source resources and draft contracts. I handle Git operations. Finish with an updated handoff, a one-line commit message and a brief chunk 09 proposal, then ask permission. For permission-required commands, show the exact command and purpose.

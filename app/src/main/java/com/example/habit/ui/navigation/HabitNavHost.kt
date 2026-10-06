@@ -24,7 +24,8 @@ import com.example.habit.ui.screens.newhabit.NewHabitScreen
 import com.example.habit.ui.screens.newhabit.NewHabitViewModel
 import com.example.habit.ui.screens.newhabit.PlanningDraftContract
 import com.example.habit.ui.screens.onboarding.OnboardingScreen
-import com.example.habit.ui.screens.placeholder.NotBuiltYetScreen
+import com.example.habit.ui.screens.progress.ProgressScreen
+import com.example.habit.ui.screens.profile.ProfileScreen
 import com.example.habit.ui.screens.splash.SplashScreen
 import com.example.habit.ui.theme.Motion
 
@@ -42,7 +43,12 @@ fun HabitNavHost(modifier: Modifier = Modifier, navController: NavHostController
                 onPlanningResultConsumed = { entry.savedStateHandle[PlanningDraftContract.RESULT_KEY] = null },
                 onBack = back, onCreated = back)
         },
-        root = { tab, select -> if (tab == HomeTab.COACH) CoachRoot(select) else NotBuiltYetScreen(tab, select) },
+        root = { tab, select -> when (tab) {
+            HomeTab.PROGRESS -> ProgressScreen({ navController.navigate(Routes.detail(it)) { launchSingleTop = true } }, select)
+            HomeTab.PROFILE -> ProfileScreen(select)
+            HomeTab.COACH -> CoachRoot(select)
+            HomeTab.HOME -> Unit
+        } },
         detail = { _, back -> HabitDetailScreen(back, management::open) },
     )
     HabitManagementHost(management, onEdit = { navController.navigate(Routes.editHabit(it)) { launchSingleTop = true } },
@@ -125,7 +131,7 @@ internal fun HabitNavigationGraph(
             listOf(Routes.PROGRESS to HomeTab.PROGRESS, Routes.COACH to HomeTab.COACH, Routes.PROFILE to HomeTab.PROFILE).forEach { (route, tab) ->
                 composable(route) {
                     BackHandler { switchTab(HomeTab.HOME) }
-                    root(tab, ::switchTab)
+                    CompositionLocalProvider(LocalHabitAnimatedScope provides this) { root(tab, ::switchTab) }
                 }
             }
         }
