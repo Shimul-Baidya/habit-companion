@@ -4,7 +4,7 @@ These instructions apply throughout this project. Read this file before working 
 
 ## Current phase and continuity
 
-The current request authorises project instructions and implementation planning only. Do not implement app changes until the owner requests implementation. A later implementation request supersedes this phase restriction; do not request the same authorisation again.
+Implementation is now authorised one chunk at a time. Complete the requested chunk, verify each logical step, and update the handoff. End with a one-line commit message, a brief proposal for the next chunk, and a request for permission to proceed. The owner performs Git operations; do not commit, stage or push on their behalf. When command execution needs permission, include the exact command and its purpose in the approval request.
 
 Read `IMPLEMENTATION_PLAN.md` for chunk order, dependencies, acceptance criteria and progress. Read `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` for source analysis and screen details, recognising that its earlier proposals are subordinate to the final decisions here. Keep this file for standing rules and the plan for execution status; do not duplicate the whole review in every handoff.
 
@@ -47,6 +47,7 @@ Do not infer approval of old review proposals when they conflict with this file.
 - **Custom:** user selects specific weekdays.
 - Use effective-date/history information for schedule, target and other changes that affect interpretation of past records. Editing today's settings must not reinterpret previous dates.
 - Resolve weekly occurrence allocation, deadlines, partial weeks and metric units coherently before freezing the history model. Do not invent missed weekdays for a flexible weekly quota or silently count all unchosen days as misses. The plan records this consequential policy checkpoint.
+- The owner approved the chunk 01 Weekly contract in `DOMAIN_BEHAVIOR.md`: fixed Monday–Sunday quotas 1–7; distinct achieved dates; capped contributing successes; week-end shortfalls; prorated creation weeks; archive cancels pending slots; occurrence streak units; Weekly schedule changes next Monday and other expectation changes tomorrow. Read that contract before persistence/calculation work; do not reopen the settled policy.
 - Changing the displayed week-start preference must not silently repartition already closed historical quota periods.
 
 ### Tracking and goals

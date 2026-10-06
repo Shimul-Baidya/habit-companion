@@ -1,6 +1,6 @@
 # Habit Companion implementation plan
 
-Created 6 October 2026 from the owner's final instructions and the current project/resources. This plan covers the full approved application. **Implementation has not started under this request.** All chunks below are planned, not claims of completed or tested work.
+Created 6 October 2026 from the owner's final instructions and the current project/resources. This plan covers the full approved application. Implementation began with chunk 01; consult the status table and handoff for executed work.
 
 Read `AGENTS.md` first. It records authoritative product decisions and continuing engineering constraints. `HABIT_COMPANION_REQUIREMENTS_REVIEW.md` remains useful for source locations and original screen details, but conflicting earlier proposals are superseded.
 
@@ -30,7 +30,7 @@ Current manifest enables backup with template XML rules; privacy configuration m
 
 Use **13 medium-sized chunks**, each with a bounded outcome and explicit completion gate. This separates the two largest risks—historical data semantics and Coach integration—into testable stages, while grouping related screen work so shared foundations are not repeatedly rebuilt.
 
-Each chunk should compile and leave its own scope reviewable. Intermediate placeholders may remain only for later chunks and must stay visibly recorded as unfinished. Test doubles are allowed in tests/previews; a simulated Coach cannot satisfy production completion. Do not require a fresh user confirmation between ordinary chunks once implementation is authorised within the requested scope. If the owner requests one chunk, complete that chunk and its validation, then hand it back.
+Each chunk should compile and leave its own scope reviewable. Intermediate placeholders may remain only for later chunks and must stay visibly recorded as unfinished. Test doubles are allowed in tests/previews; a simulated Coach cannot satisfy production completion. The owner now requests permission between chunks: complete the requested chunk, provide its one-line commit message and briefly propose the next chunk for approval. The owner performs Git operations.
 
 Start each chunk by reading its dependencies and current handoff, inspect only the relevant current files/resources, implement the bounded outcome, run the specified checks, and update the status. If context compacts, resume the active chunk. Split a chunk only when a real complexity or environment constraint requires it; document why without dropping its remaining scope. Do not re-plan the entire application every turn.
 
@@ -38,7 +38,9 @@ Start each chunk by reading its dependencies and current handoff, inspect only t
 
 The approved decisions need no further approval. Two areas still lack sufficient detail for a final implementation contract. They do not prevent creating these documents or planning independent work.
 
-### Weekly quota semantics — address in chunk 1
+### Weekly quota semantics — approved during chunk 1
+
+The owner approved the concrete proposal during implementation. `DOMAIN_BEHAVIOR.md` records the final policy, examples, effective dates and calculation units. The following paragraphs retain the original checkpoint context; they are no longer pending decisions.
 
 Weekly frequency is settled, but a quota has no fixed missed weekday. Agree a precise occurrence timeline before storing historical outcomes. Recommended proposal for review: one achieved occurrence per distinct eligible date when a binary log is done or a quantity target is met; at most the requested weekly quota contributes to quota consistency; unfilled required occurrences become misses only when the period closes. Extra achievements remain in history without inflating quota consistency. Daily/Custom retain their scheduled-date semantics.
 
@@ -54,7 +56,7 @@ Provider, endpoint/model, credential provisioning and provider-specific retentio
 
 | Chunk | Deliverable | Depends on | Status |
 |---|---|---|---|
-| 01 | Historical domain contracts and pure behaviour | Weekly checkpoint | Not started |
+| 01 | Historical domain contracts and pure behaviour | Weekly checkpoint approved | Complete |
 | 02 | Versioned persistence and safe migration | 01 | Not started |
 | 03 | Shared calculations, date refresh and observable state | 01–02 | Not started |
 | 04 | Complete New/Edit Habit and retained drafts | 01–03 | Not started |
@@ -254,13 +256,13 @@ Compare actual rendered screens with the supplied mockups at 393 × 832dp in lig
 
 During implementation use the Gradle wrapper and existing configured dependencies. The usual checks are `./gradlew :app:assembleDebug :app:testDebugUnitTest` for compilation/unit behaviour, `./gradlew :app:lintDebug` for relevant static checks, and `./gradlew :app:connectedDebugAndroidTest` when a suitable device/emulator exists. Run affected tests per chunk; do not repeat every device scenario after a harmless documentation edit. Add Room migration testing support only when needed for meaningful migration verification.
 
-These commands are planned and have **not** been executed for this request. Environment/toolchain/network problems must be reported accurately and resolved under applicable tool permissions. Do not install or upgrade unrelated tooling merely to follow the plan.
+Commands actually executed are recorded per chunk below. Environment/toolchain/network problems must be reported accurately and resolved under applicable tool permissions. Do not install or upgrade unrelated tooling merely to follow the plan.
 
 For each check record whether it was executed, passed/failed, and its practical limit. Preserve test fixtures only in tests; screenshots/previews alone do not prove persistence, migrations, transport or notifications.
 
 ## 8. Progress and handoff record
 
-Current status: **planning documents complete; all implementation chunks not started**. Next implementation step, when requested: chunk 01. No application source, database schema or supplied resource was modified by this planning request.
+Current status: **chunk 01 complete and verified; awaiting owner approval for chunk 02**. Chunks 02–13 remain not started. No Room schema, supplied resource or existing screen was modified in chunk 01.
 
 Append one concise entry per completed or paused implementation chunk using:
 
@@ -274,3 +276,12 @@ Next chunk/dependency:
 ```
 
 Update the overview's status at the same time. Do not mark a chunk complete while its required implementation remains missing. Distinguish completed implementation from environment-limited verification; do not erase pending evidence from the final record.
+
+### Chunk 01 — Complete, 6 October 2026
+
+- **Implemented:** independent pure `HabitHistory`, schedule/tracking/log/effective-setting types, decimal quantity and eligibility validation, historical correction, typed schedule/tracking changes with safe effective dates, injected clock/date source, ordered occurrence replay, all-time streaks, risk/recovery and consistency counts. Added focused JVM tests and one Android date/decimal/runtime test. Recorded the approved contract in `DOMAIN_BEHAVIOR.md`; updated standing instructions for owner-run Git and approval between chunks.
+- **Policy:** owner explicitly approved Weekly quotas 1–7, Monday–Sunday periods independent of display preference, capped distinct-date successes, shortfalls ordered after successes at closure, prorated creation weeks, archive cancelling pending slots, occurrence streak units and effective edit dates. Pending expectations remain in consistency/progress denominators under the original review while being excluded from misses/risk. No unresolved chunk 01 product checkpoint remains.
+- **Checks actually run:** baseline `./gradlew :app:testDebugUnitTest :app:assembleDebug` passed; history-only tests plus assembly passed; all domain tests plus assembly passed; final `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:connectedDebugAndroidTest` passed after final changes. Final reports show **34 JVM tests (33 new domain tests + 1 existing example), 2 Pixel 7 device tests (1 new runtime test + 1 existing context test), zero failures/errors/skips**. Domain cases include 1,000-completion streaks, history corrections, target/unit changes, every frequency, Weekly extra-log reallocation, partial/archive weeks, risk recovery/re-entry and Dhaka midnight. `git diff --check` passed. Git operations were limited to read-only status/diff inspection.
+- **Verification limits:** the new domain is intentionally not wired to v1 persistence/screens until chunks 02–03; the existing repository/legacy calculator still have their documented limitations. Device tests validate Android runtime integration, not screen fidelity or every navigation flow. Room/DataStore migrations and UI changes are outside this chunk; no claim of runtime verification for them. No dependency or supplied resource changes.
+- **Next:** chunk 02, versioned persistence/data-preserving migration, effective settings/quantity storage, transactional operations, compatible preferences, backup/privacy rules and public branding. Obtain the owner's chunk approval first; preserve v1 Weekly weekday-mask history rather than reinterpret it as a quota.
+- **Suggested one-line commit:** `feat: add historical habit domain rules and verified weekly quota calculations`
