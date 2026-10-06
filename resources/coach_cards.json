@@ -1,0 +1,842 @@
+[
+  {
+    "id": "card_01",
+    "title": "Set Implementation Intentions",
+    "principle": "People who make a specific plan for when and where they will perform a new habit are significantly more likely to follow through than those relying on motivation alone.",
+    "action": "Fill in the formula: 'I will [BEHAVIOR] at [TIME] in [LOCATION]' before starting a new routine.",
+    "use_when": "When you have vague goals like 'exercise more' or 'study harder' but fail to take consistent action.",
+    "tags": [
+      "planning",
+      "cues",
+      "scheduling",
+      "clarity"
+    ],
+    "source": "Atomic Habits, Chapter 5"
+  },
+  {
+    "id": "card_02",
+    "title": "Stack New Habits onto Existing Routines",
+    "principle": "Current daily habits are deeply ingrained in your brain; pairing a new behavior directly after an established routine creates an obvious and reliable trigger.",
+    "action": "State your rule: 'After [CURRENT HABIT], I will [NEW HABIT]', such as doing 10 push-ups right after pouring morning coffee.",
+    "use_when": "When struggling to remember to perform a small habit consistently during a busy day.",
+    "tags": [
+      "habit-stacking",
+      "cues",
+      "routines",
+      "triggers"
+    ],
+    "source": "Atomic Habits, Chapter 5"
+  },
+  {
+    "id": "card_03",
+    "title": "Design Visual Environment Triggers",
+    "principle": "Environment is the invisible hand shaping behavior; making cues for desirable habits prominent in your surroundings makes starting natural and friction-free.",
+    "action": "Place the physical object needed for your target habit in plain sight (e.g., set your book on your pillow or water bottle on your desk).",
+    "use_when": "When you forget your intended habits because the necessary items are tucked away in drawers or closets.",
+    "tags": [
+      "environment",
+      "cues",
+      "friction",
+      "visibility"
+    ],
+    "source": "Atomic Habits, Chapter 6"
+  },
+  {
+    "id": "card_04",
+    "title": "Enforce 'One Space, One Use'",
+    "principle": "Habits become mentally paired with environmental contexts; dedicating distinct spaces or devices to single activities builds immediate, automatic focus.",
+    "action": "Designate specific physical or digital zones exclusively for work, study, or relaxation, avoiding mixing recreation with focus areas.",
+    "use_when": "When you find yourself getting distracted by entertainment while trying to work in bed or at a casual desk.",
+    "tags": [
+      "environment",
+      "context",
+      "focus",
+      "workspace"
+    ],
+    "source": "Atomic Habits, Chapter 6"
+  },
+  {
+    "id": "card_05",
+    "title": "Make Bad Cues Invisible",
+    "principle": "Self-control is a short-term strategy; eliminating temptation at the source by hiding cues is far more effective than attempting to overpower urges continuously.",
+    "action": "Remove triggers of unwanted habits from your immediate sight (e.g., place your smartphone in another room while working).",
+    "use_when": "When mindless habits like checking social media or eating snacks keep interrupting your focus.",
+    "tags": [
+      "environment",
+      "distraction-control",
+      "cues",
+      "self-control"
+    ],
+    "source": "Atomic Habits, Chapter 7"
+  },
+  {
+    "id": "card_06",
+    "title": "Bundle Temptations with Requirements",
+    "principle": "Linking an activity you need to do with an activity you eagerly want to do leverages dopamine anticipation to make hard habits attractive.",
+    "action": "Allow yourself to enjoy a favorite reward (like listening to a podcast) only while performing a necessary habit (like exercising or chores).",
+    "use_when": "When a necessary habit feels tedious or unmotivating to begin on its own.",
+    "tags": [
+      "temptation-bundling",
+      "motivation",
+      "rewards",
+      "exercise"
+    ],
+    "source": "Atomic Habits, Chapter 8"
+  },
+  {
+    "id": "card_07",
+    "title": "Create a Pre-Habit Motivation Ritual",
+    "principle": "Performing a short, pleasurable ritual right before a difficult task conditions your brain to associate the upcoming activity with positive feelings.",
+    "action": "Perform a simple 1-minute pleasurable action (like taking three deep breaths or listening to a favorite track) immediately before starting hard work.",
+    "use_when": "When facing intense dread or resistance right before initiating a demanding task.",
+    "tags": [
+      "motivation",
+      "rituals",
+      "mindset",
+      "focus"
+    ],
+    "source": "Atomic Habits, Chapter 10"
+  },
+  {
+    "id": "card_08",
+    "title": "Reduce Friction for Good Habits",
+    "principle": "Human behavior naturally follows the Law of Least Effort; decreasing the number of steps required to start a habit dramatically boosts consistency.",
+    "action": "Eliminate intermediate steps between you and your goal (e.g., lay out workout clothes the night before).",
+    "use_when": "When initiating a habit requires too much setup effort, leading to procrastination.",
+    "tags": [
+      "friction",
+      "environment",
+      "prep",
+      "ease"
+    ],
+    "source": "Atomic Habits, Chapter 12"
+  },
+  {
+    "id": "card_09",
+    "title": "Increase Friction for Unwanted Habits",
+    "principle": "Adding even a small amount of physical effort or delay between you and a bad habit creates just enough pause to prevent mindless execution.",
+    "action": "Add friction to bad behaviors (e.g., unplug the TV after every use or log out of distracting apps).",
+    "use_when": "When you engage in automatic, impulse-driven habits without thinking.",
+    "tags": [
+      "friction",
+      "distraction-control",
+      "habits",
+      "barriers"
+    ],
+    "source": "Atomic Habits, Chapter 12"
+  },
+  {
+    "id": "card_10",
+    "title": "Prime the Environment for Future Use",
+    "principle": "Resetting your physical space immediately after finishing an activity lowers the activation energy required to start the routine next time.",
+    "action": "Spend two minutes at the end of the day cleaning your desk, washing your coffee cup, and setting out tools for tomorrow.",
+    "use_when": "When starting your morning feels chaotic or stalled due to leftover clutter from the day before.",
+    "tags": [
+      "environment",
+      "prep",
+      "routines",
+      "organization"
+    ],
+    "source": "Atomic Habits, Chapter 12"
+  },
+  {
+    "id": "card_11",
+    "title": "Apply the Two-Minute Rule",
+    "principle": "When starting a new habit, scaling it down to a version that takes under two minutes ensures you standardize the ritual before trying to optimize performance.",
+    "action": "Truncate your new target habit into a 2-minute entry version (e.g., 'Read one page' instead of 'Read for 30 minutes').",
+    "use_when": "When feeling overwhelmed by the size of a habit or repeatedly failing to start.",
+    "tags": [
+      "two-minute-rule",
+      "simplicity",
+      "starting",
+      "routine"
+    ],
+    "source": "Atomic Habits, Chapter 13"
+  },
+  {
+    "id": "card_12",
+    "title": "Master the Gateway Habit",
+    "principle": "Many daily routines hinge on decisive moments—small choices that dictate the path you take for the next hour or more.",
+    "action": "Identify and master the entry point of your routine (e.g., putting on running shoes) rather than stressing over the entire workout.",
+    "use_when": "When you consistently struggle with the middle or end of a habit routine because you never successfully cross the starting line.",
+    "tags": [
+      "gateway-habit",
+      "decisive-moments",
+      "routines",
+      "starting"
+    ],
+    "source": "Atomic Habits, Chapter 13"
+  },
+  {
+    "id": "card_13",
+    "title": "Practice Progressive Habit Shaping",
+    "principle": "Once a two-minute gateway habit is standardized, you can systematically scale it up step-by-step toward your ultimate outcome without causing burnout.",
+    "action": "Advance your habit level only after easily maintaining the prior tier for at least a week (e.g., 2 minutes -> 5 minutes -> 15 minutes).",
+    "use_when": "When you want to expand a small, established habit into a full-length high-performance routine.",
+    "tags": [
+      "habit-shaping",
+      "scaling",
+      "progression",
+      "consistency"
+    ],
+    "source": "Atomic Habits, Chapter 13"
+  },
+  {
+    "id": "card_14",
+    "title": "Lock Behavior with Commitment Devices",
+    "principle": "A choice made in the present that restricts your future options forces compliance with good intentions before temptation strikes.",
+    "action": "Use a tool or physical constraint to lock in future action (e.g., pay in advance for a group fitness class with a cancellation fee).",
+    "use_when": "When you repeatedly break promises to yourself when the moment to act arrives.",
+    "tags": [
+      "commitment-devices",
+      "precommitment",
+      "accountability",
+      "discipline"
+    ],
+    "source": "Atomic Habits, Chapter 14"
+  },
+  {
+    "id": "card_15",
+    "title": "Leverage One-Time Automations",
+    "principle": "Single decisions that require effort up front can yield recurring automated payoffs that keep good habits running in the background indefinitely.",
+    "action": "Implement a one-time setup action (e.g., set up automatic savings transfers, buy smaller dinner plates, or install a water filter).",
+    "use_when": "When relying on daily decision-making energy leads to inconsistent choices in health or finances.",
+    "tags": [
+      "automation",
+      "one-time-actions",
+      "systems",
+      "finance"
+    ],
+    "source": "Atomic Habits, Chapter 14"
+  },
+  {
+    "id": "card_16",
+    "title": "Attach Immediate Reinforcement",
+    "principle": "What is immediately rewarded is repeated; adding a small, satisfying outcome right after completing a habit reinforces the feedback loop.",
+    "action": "Grant yourself a immediate micro-reward directly after performing your habit (e.g., transfer $5 to a vacation fund every time you skip takeout).",
+    "use_when": "When a habit has long-term rewards but lacks immediate gratification, making it hard to sustain.",
+    "tags": [
+      "reinforcement",
+      "rewards",
+      "satisfaction",
+      "motivation"
+    ],
+    "source": "Atomic Habits, Chapter 15"
+  },
+  {
+    "id": "card_17",
+    "title": "Maintain Visual Habit Tracking",
+    "principle": "Visual forms of measurement provide clear proof of progress, making habits obvious, attractive, and satisfying every time you mark off a completion.",
+    "action": "Mark an 'X' on a calendar or move a paperclip from one jar to another immediately after finishing your habit.",
+    "use_when": "When you feel unmotivated because daily progress feels invisible or intangible.",
+    "tags": [
+      "tracking",
+      "visual-cues",
+      "progress",
+      "satisfaction"
+    ],
+    "source": "Atomic Habits, Chapter 16"
+  },
+  {
+    "id": "card_18",
+    "title": "Enforce the 'Never Miss Twice' Rule",
+    "principle": "Missing once is an accident; missing twice is the start of a new bad habit. Quick recovery preserves momentum and identity.",
+    "action": "If life interrupts your routine and you miss a day, make getting back on track the next day your top priority.",
+    "use_when": "When a single missed day causes guilt that spirals into abandoning the habit entirely.",
+    "tags": [
+      "recovery",
+      "consistency",
+      "mindset",
+      "resilience"
+    ],
+    "source": "Atomic Habits, Chapter 16"
+  },
+  {
+    "id": "card_19",
+    "title": "Establish a Social Habit Contract",
+    "principle": "Adding an immediate social cost to failure makes non-compliance public and uncomfortable, leveraging our natural desire for social respect.",
+    "action": "Sign a written agreement with an accountability partner specifying a concrete penalty if you fail to perform your habit.",
+    "use_when": "When personal willpower is insufficient and you need strong external accountability.",
+    "tags": [
+      "habit-contract",
+      "accountability",
+      "social-cost",
+      "commitment"
+    ],
+    "source": "Atomic Habits, Chapter 17"
+  },
+  {
+    "id": "card_20",
+    "title": "Adopt Identity-Based Goal Framing",
+    "principle": "True behavior change is identity change; focusing on who you wish to become rather than what you want to achieve creates long-term adherence.",
+    "action": "Reframe your habit goals around identity statements (e.g., 'I am a reader' instead of 'I want to read 10 books').",
+    "use_when": "When you struggle to maintain habits because your internal self-image contradicts your target behaviors.",
+    "tags": [
+      "identity",
+      "mindset",
+      "reframing",
+      "beliefs"
+    ],
+    "source": "Atomic Habits, Chapter 2"
+  },
+  {
+    "id": "card_21",
+    "title": "Conduct a Complete Mind Sweep",
+    "principle": "Your brain is for having ideas, not holding them. Storing uncaptured commitments in mental RAM creates continuous, subconscious stress.",
+    "action": "Write down every single unfulfilled task, idea, or agreement currently pulling at your attention onto paper or into an inbox.",
+    "use_when": "When feeling overwhelmed, scattered, or anxious about forgotten tasks and loose ends.",
+    "tags": [
+      "capture",
+      "mind-sweep",
+      "clarity",
+      "stress-reduction"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 5"
+  },
+  {
+    "id": "card_22",
+    "title": "Apply the GTD Two-Minute Rule",
+    "principle": "If an incoming actionable task takes less than two minutes to complete, storing and tracking it requires more effort than executing it immediately.",
+    "action": "Dispatch any incoming item instantly during processing if it will take under 120 seconds.",
+    "use_when": "When quick emails, quick approvals, or simple tasks pile up in your inbox.",
+    "tags": [
+      "processing",
+      "two-minute-rule",
+      "efficiency",
+      "inbox-zero"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 6"
+  },
+  {
+    "id": "card_23",
+    "title": "Define Absolute Next Physical Actions",
+    "principle": "Projects stall not from lack of time, but because the next physical action required to move them forward has not been explicitly determined.",
+    "action": "Transform abstract goals (e.g., 'car service') into specific physical actions (e.g., 'Call mechanic for opening').",
+    "use_when": "When looking at a vague to-do item and feeling psychological resistance to starting.",
+    "tags": [
+      "next-actions",
+      "clarity",
+      "execution",
+      "planning"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 6"
+  },
+  {
+    "id": "card_24",
+    "title": "Organize Actions by Context",
+    "principle": "Grouping predefined actions by the specific tool, location, or person required prevents unproductive resorting and matches choices to your environment.",
+    "action": "Sort your next-action lists into categories like @Calls, @Computer, @Errands, and @Agendas.",
+    "use_when": "When you have a specific pocket of time/location and need to see only available options.",
+    "tags": [
+      "context",
+      "organization",
+      "lists",
+      "focus"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_25",
+    "title": "Separate Capture from Processing",
+    "principle": "Trying to organize or execute inputs while collecting them causes mental fatigue; separating gathering from decision-making preserves focus.",
+    "action": "Collect all incoming items in an in-basket without stopping to process or organize them until collection is complete.",
+    "use_when": "When interruptions and new ideas break your flow while working on critical tasks.",
+    "tags": [
+      "workflow",
+      "capture",
+      "processing",
+      "boundaries"
+    ],
+    "source": "Getting Things Done, Chapter 2"
+  },
+  {
+    "id": "card_26",
+    "title": "Process In-Baskets Sequentially",
+    "principle": "Processing 'in' to empty means deciding what every item is one-by-one without skipping items or throwing anything back into the pile.",
+    "action": "Process your inbox from the top down, making a firm decision on each item before moving to the next.",
+    "use_when": "When you skim your inbox repeatedly, dealing only with easy items while letting hard ones collect dust.",
+    "tags": [
+      "processing",
+      "inbox-zero",
+      "focus",
+      "decision-making"
+    ],
+    "source": "Getting Things Done, Chapter 6"
+  },
+  {
+    "id": "card_27",
+    "title": "Maintain a 'Waiting-For' Log",
+    "principle": "Delegated tasks and pending deliverables will slip through the cracks unless tracked explicitly in a dedicated follow-up inventory.",
+    "action": "Log delegated tasks on a 'Waiting-For' list with the person's name, topic, and date requested.",
+    "use_when": "When projects get delayed because someone else hasn't returned information or completed their part.",
+    "tags": [
+      "delegation",
+      "tracking",
+      "follow-up",
+      "accountability"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_28",
+    "title": "Perform a Weekly Review",
+    "principle": "Systematic weekly regrouping to empty your head, update lists, and review projects is the master key to maintaining trust in your productivity system.",
+    "action": "Set aside a dedicated two-hour window every Friday afternoon to clean up notes, review project lists, and update action items.",
+    "use_when": "When your schedule feels out of control and you suspect loose ends are accumulating.",
+    "tags": [
+      "weekly-review",
+      "reflection",
+      "system-maintenance",
+      "clarity"
+    ],
+    "source": "Getting Things Done, Chapter 8"
+  },
+  {
+    "id": "card_29",
+    "title": "Curate a 'Someday/Maybe' Back-Burner",
+    "principle": "Parking non-active ideas on a trusted incubator list keeps them safely accessible without cluttering your daily active action lists.",
+    "action": "Move future aspirations, travel ideas, or potential projects onto a 'Someday/Maybe' list for regular review.",
+    "use_when": "When exciting future ideas distract you from executing immediate, active projects.",
+    "tags": [
+      "incubation",
+      "someday-maybe",
+      "focus",
+      "idea-management"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_30",
+    "title": "Deploy a 43-Folder Tickler File",
+    "principle": "A physical or digital tickler system automatically triggers time-sensitive documents and reminders on the exact future date they become relevant.",
+    "action": "Set up 31 daily and 12 monthly folders to hold reminders that resurface automatically on their designated day.",
+    "use_when": "When you need to remember paper documents, tickets, or reminders on a specific day in the future.",
+    "tags": [
+      "tickler-file",
+      "reminders",
+      "incubation",
+      "organization"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_31",
+    "title": "Apply the 4-Criteria Choice Model",
+    "principle": "Choosing what to do in the moment should be filtered sequentially by Context, Time Available, Energy Available, and Priority.",
+    "action": "Assess your current state: What can I do right now given my location, remaining minutes, physical/mental energy, and top priority?",
+    "use_when": "When standing in front of a long to-do list unsure of which task makes the most sense to pick right now.",
+    "tags": [
+      "decision-making",
+      "prioritization",
+      "context",
+      "energy"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 9"
+  },
+  {
+    "id": "card_32",
+    "title": "Balance the Threefold Daily Work Model",
+    "principle": "Daily work consists of three distinct activities: doing predefined work, doing work as it shows up, and defining your work.",
+    "action": "Intentionally allocate time to define your work (inbox clearing) rather than spending 100% of your day reactively doing ad-hoc tasks.",
+    "use_when": "When unexpected requests hijack your entire day, preventing you from processing new input.",
+    "tags": [
+      "workflow",
+      "daily-work",
+      "time-management",
+      "planning"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 9"
+  },
+  {
+    "id": "card_33",
+    "title": "Work Up from Ground-Level 'Runway'",
+    "principle": "Clearing immediate daily commitments (Runway) provides the mental freedom and grounded perspective required to evaluate higher-altitude goals.",
+    "action": "Get your immediate next-actions and current project lists under control before trying to fix long-term 3-5 year vision goals.",
+    "use_when": "When high-level strategic planning feels impossible because daily task fires are consuming your attention.",
+    "tags": [
+      "bottom-up",
+      "horizons-of-focus",
+      "runway",
+      "prioritization"
+    ],
+    "source": "Getting Things Done, Chapter 2 & 9"
+  },
+  {
+    "id": "card_34",
+    "title": "Anchor Projects with Purpose and Outcome",
+    "principle": "Natural project planning starts by establishing the 'Why' (purpose) and visualizing the successful result before diving into execution.",
+    "action": "Write down a single sentence defining your purpose and intended successful outcome before planning project details.",
+    "use_when": "When a team or project loses direction, resulting in confusion over what 'done' actually looks like.",
+    "tags": [
+      "natural-planning",
+      "purpose",
+      "vision",
+      "outcomes"
+    ],
+    "source": "Getting Things Done, Chapter 3"
+  },
+  {
+    "id": "card_35",
+    "title": "Unconstrained Project Brainstorming",
+    "principle": "Brainstorming yields the best ideas when you capture all possibilities non-judgmentally before attempting to organize or critique them.",
+    "action": "Mind-map or list every single idea related to a project onto paper without editing or judging quality.",
+    "use_when": "When planning a new or complex initiative where the path forward is unclear.",
+    "tags": [
+      "brainstorming",
+      "natural-planning",
+      "creativity",
+      "mind-mapping"
+    ],
+    "source": "Getting Things Done, Chapter 3"
+  },
+  {
+    "id": "card_36",
+    "title": "Maintain an Active Projects List",
+    "principle": "Any desired outcome requiring more than one action step is a project and must be cataloged on a master list to ensure complete oversight.",
+    "action": "Keep an inventory of all 30-100 active projects and review it weekly to confirm every project has at least one next action.",
+    "use_when": "When projects stall because you haven't assigned an active next step to keep them moving.",
+    "tags": [
+      "projects",
+      "tracking",
+      "weekly-review",
+      "oversight"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_37",
+    "title": "Separate Project Support Materials",
+    "principle": "Project plans and reference documentation belong in support files, not mixed into daily next-action lists.",
+    "action": "Store project reference notes in designated physical or digital folders, pulling them out only when planning or reviewing.",
+    "use_when": "When your active task lists get bloated with background reading, charts, and meeting notes.",
+    "tags": [
+      "organization",
+      "reference",
+      "project-support",
+      "clarity"
+    ],
+    "source": "Getting Things Done, Chapter 7"
+  },
+  {
+    "id": "card_38",
+    "title": "Explicitly Renegotiate Commitments",
+    "principle": "Unkept promises to yourself create anxiety; reviewing your inventory lets you consciously renegotiate commitments rather than silently breaking them.",
+    "action": "When workload becomes unrealistic, review your complete list and explicitly defer, delegate, or drop low-priority agreements.",
+    "use_when": "When feeling guilty about overdue tasks that you no longer have the capacity to complete right now.",
+    "tags": [
+      "commitments",
+      "renegotiation",
+      "boundaries",
+      "stress-reduction"
+    ],
+    "source": "Getting Things Done, Chapter 11"
+  },
+  {
+    "id": "card_39",
+    "title": "Intelligently Dumb Down Starting Steps",
+    "principle": "Overcoming resistance on intimidating tasks requires lowering the cognitive burden to a physical step so simple anyone could perform it.",
+    "action": "Break down intimidating tasks into mindless initial steps (e.g., 'Open word processor and save blank document').",
+    "use_when": "When procrastinating on large, complex projects due to cognitive overwhelm.",
+    "tags": [
+      "procrastination",
+      "simplicity",
+      "starting",
+      "next-actions"
+    ],
+    "source": "Getting Things Done, Chapter 12"
+  },
+  {
+    "id": "card_40",
+    "title": "Cultivate a 'Mind Like Water' State",
+    "principle": "A martial artist reacts appropriately to input without over- or under-reacting; a structured workflow system creates that calm, highly responsive focus.",
+    "action": "Trust your capture and review system so completely that unexpected inputs do not cause panic or chaos.",
+    "use_when": "When surprise tasks or emergencies cause you to lose your mental equilibrium.",
+    "tags": [
+      "mind-like-water",
+      "focus",
+      "readiness",
+      "calm"
+    ],
+    "source": "Getting Things Done, Chapter 1"
+  },
+  {
+    "id": "card_41",
+    "title": "Uncover Root Causes of Distraction",
+    "principle": "Distraction is rarely about tech devices; it is an unhealthy escape from internal emotional discomfort (anxiety, boredom, incompetence).",
+    "action": "When tempted to get distracted, ask yourself: 'What uncomfortable internal emotion am I trying to escape right now?'",
+    "use_when": "When compulsively reaching for your phone or opening new browser tabs during challenging work.",
+    "tags": [
+      "internal-triggers",
+      "self-awareness",
+      "emotional-regulation",
+      "focus"
+    ],
+    "source": "Indistractable, Chapter 3 & 4"
+  },
+  {
+    "id": "card_42",
+    "title": "Surfe Urges with the 10-Minute Rule",
+    "principle": "Attempting to suppress urges directly causes rumination; acknowledging the urge and delaying gratification for 10 minutes lets emotional waves subside.",
+    "action": "When an urge strikes, tell yourself you can give in, but only after waiting 10 minutes while observing the craving.",
+    "use_when": "When fighting immediate cravings to check notifications, eat junk food, or break focus.",
+    "tags": [
+      "ten-minute-rule",
+      "impulse-control",
+      "surfing-the-urge",
+      "mindfulness"
+    ],
+    "source": "Indistractable, Chapter 6"
+  },
+  {
+    "id": "card_43",
+    "title": "Log Triggers in a Distraction Tracker",
+    "principle": "Noticing and recording the discomfort preceding a distraction builds self-awareness and shifts your response from reactive to reflective.",
+    "action": "Keep a log noting the time of day, the distraction, and the internal feeling that preceded the urge.",
+    "use_when": "When repeatedly falling victim to the same hidden distraction patterns throughout the workday.",
+    "tags": [
+      "tracking",
+      "internal-triggers",
+      "self-awareness",
+      "mindset"
+    ],
+    "source": "Indistractable, Chapter 6"
+  },
+  {
+    "id": "card_44",
+    "title": "Reimagine Tasks as Playful Challenges",
+    "principle": "Fun and focus do not require enjoyment; adding intense deliberateness and artificial constraints transforms tedious tasks into engaging challenges.",
+    "action": "Inject novelty or constraints into a boring task (e.g., set a timer and find a new, faster way to complete repetitive data entry).",
+    "use_when": "When struggling to stay focused on routine, dry, or monotonous obligations.",
+    "tags": [
+      "reimagine-task",
+      "play",
+      "novelty",
+      "engagement"
+    ],
+    "source": "Indistractable, Chapter 7"
+  },
+  {
+    "id": "card_45",
+    "title": "Dispel the Ego Depletion Myth",
+    "principle": "Believing willpower is a finite resource causes you to lose self-control; viewing willpower as infinite preserves focus under stress.",
+    "action": "Stop telling yourself 'my willpower is drained'; view self-control as an emotion that ebbs and flows based on perspective.",
+    "use_when": "When making excuses to indulge in distractions after a long or demanding workday.",
+    "tags": [
+      "mindset",
+      "willpower",
+      "temperament",
+      "self-talk"
+    ],
+    "source": "Indistractable, Chapter 8"
+  },
+  {
+    "id": "card_46",
+    "title": "Timebox 100% of Your Daily Schedule",
+    "principle": "You cannot call something a distraction unless you know what it is distracting you from; timeboxing allocates specific time for every value.",
+    "action": "Fill your calendar completely with timeboxes for work, personal care, and relationships, leaving no unallocated white space.",
+    "use_when": "When operating from a mile-long to-do list without defined time windows, leading to constant distraction.",
+    "tags": [
+      "timeboxing",
+      "calendar",
+      "traction",
+      "scheduling"
+    ],
+    "source": "Indistractable, Chapter 9"
+  },
+  {
+    "id": "card_47",
+    "title": "Measure Success by Schedule Adherence",
+    "principle": "Productivity is measured by whether you did what you planned to do, not output; spent time on planned leisure is traction, not distraction.",
+    "action": "Evaluate your day based solely on whether you followed your timeboxed schedule as intended.",
+    "use_when": "When feeling guilty about taking breaks or uncertain whether your work time was spent effectively.",
+    "tags": [
+      "timeboxing",
+      "traction",
+      "schedule-adherence",
+      "mindset"
+    ],
+    "source": "Indistractable, Chapter 9"
+  },
+  {
+    "id": "card_48",
+    "title": "Sync Schedules with Key Stakeholders",
+    "principle": "Colleagues and family distract you when they lack visibility into your time; aligning schedules sets transparent boundaries and expectations.",
+    "action": "Review your weekly timeboxed calendar with your manager or partner to confirm priorities and workload alignment.",
+    "use_when": "When bosses, clients, or family members interrupt you with extra demands during planned focus blocks.",
+    "tags": [
+      "schedule-syncing",
+      "stakeholders",
+      "communication",
+      "boundaries"
+    ],
+    "source": "Indistractable, Chapter 12"
+  },
+  {
+    "id": "card_49",
+    "title": "Filter Triggers with the Critical Question",
+    "principle": "External cues are not inherently bad; asking whether a trigger serves your plan or pulls you away separates helpful signals from noise.",
+    "action": "Before responding to any notification, ask: 'Is this trigger serving me, or am I serving it?'",
+    "use_when": "When pings, chimes, and banners constantly prompt you to react instantly.",
+    "tags": [
+      "external-triggers",
+      "notifications",
+      "evaluation",
+      "mindfulness"
+    ],
+    "source": "Indistractable, Chapter 13"
+  },
+  {
+    "id": "card_50",
+    "title": "Display Explicit Do-Not-Interrupt Signals",
+    "principle": "Preventing workplace interruptions requires clear physical or digital cues that signal to others that you are currently in focused traction.",
+    "action": "Put up a visible screen sign, wear a specific hat/indicator, or set your chat status to 'Focus Mode' during deep work.",
+    "use_when": "When working in open office spaces or shared homes where people frequently interrupt you.",
+    "tags": [
+      "interruptions",
+      "external-triggers",
+      "workspace",
+      "boundaries"
+    ],
+    "source": "Indistractable, Chapter 14"
+  },
+  {
+    "id": "card_51",
+    "title": "Batch and Time-Tag Email Replies",
+    "principle": "To get fewer emails, send fewer emails; tagging messages by response urgency and replying during scheduled timeboxes breaks the reactive loop.",
+    "action": "Tag incoming emails as '@Today' or '@ThisWeek', processing urgent ones daily and batching non-urgent ones in a dedicated weekly block.",
+    "use_when": "When email consumes hours of your day because you respond to every message as soon as it arrives.",
+    "tags": [
+      "email",
+      "batching",
+      "timeboxing",
+      "communication"
+    ],
+    "source": "Indistractable, Chapter 15"
+  },
+  {
+    "id": "card_52",
+    "title": "Enforce Group Chat Drop-In Windows",
+    "principle": "Lurking in group chat all day creates continuous distraction; scheduling short drop-in windows allows communication without constant interruption.",
+    "action": "Treat group chat as asynchronous; check and reply only during scheduled 15-minute timeboxes in your day.",
+    "use_when": "When team chat apps feel like an endless, distracting virtual meeting running in the background.",
+    "tags": [
+      "group-chat",
+      "communication",
+      "batching",
+      "focus"
+    ],
+    "source": "Indistractable, Chapter 16"
+  },
+  {
+    "id": "card_53",
+    "title": "Establish Screen-Free Meeting Rules",
+    "principle": "Meetings without devices generate better outcomes; requiring explicit agendas and banning laptops/phones keeps participants present.",
+    "action": "Require a written agenda before accepting any meeting, and insist that all devices remain put away unless designated for taking notes.",
+    "use_when": "When meetings devolve into roomfuls of people multitasking mindlessly on laptops and phones.",
+    "tags": [
+      "meetings",
+      "external-triggers",
+      "focus",
+      "collaboration"
+    ],
+    "source": "Indistractable, Chapter 17"
+  },
+  {
+    "id": "card_54",
+    "title": "De-Clutter Smartphone App Screens",
+    "principle": "Rearranging smartphone screens removes visual cues for mindless checking, keeping your phone as a tool rather than a distraction engine.",
+    "action": "Uninstall unnecessary apps, move social media to desktop, and leave only primary operational apps on your home screen.",
+    "use_when": "When unlocking your phone to check a text leads to 20 minutes of mindless social media scrolling.",
+    "tags": [
+      "smartphone",
+      "app-management",
+      "environment",
+      "external-triggers"
+    ],
+    "source": "Indistractable, Chapter 18"
+  },
+  {
+    "id": "card_55",
+    "title": "Reclaim Auditory and Visual Notifications",
+    "principle": "Auditory and visual notifications condition a stimulus-response loop; granting permission only to critical human channels restores focus.",
+    "action": "Turn off sound and sight notifications for all apps except urgent direct messaging and calls.",
+    "use_when": "When constant buzzing and red notification badges fragment your attention span.",
+    "tags": [
+      "notifications",
+      "smartphone",
+      "external-triggers",
+      "focus"
+    ],
+    "source": "Indistractable, Chapter 18"
+  },
+  {
+    "id": "card_56",
+    "title": "Clean Digital Workspace Clutter",
+    "principle": "Desktop clutter and open browser tabs place a heavy psychological load on attention; a pristine digital workspace fosters immediate focus.",
+    "action": "Close all open browser tabs at the end of the day, turn off desktop notifications, and hide desktop icons.",
+    "use_when": "When opening your computer presents a chaotic visual wall of tabs and alerts.",
+    "tags": [
+      "workspace",
+      "desktop",
+      "clutter",
+      "external-triggers"
+    ],
+    "source": "Indistractable, Chapter 19"
+  },
+  {
+    "id": "card_57",
+    "title": "Combine Read-Later Apps with Multitasking",
+    "principle": "Reading online articles during the workday breaks traction; saving them to a read-later app to listen to during exercise creates a double win.",
+    "action": "Save articles to Pocket and use text-to-speech to listen to them only while taking walks, commuting, or working out.",
+    "use_when": "When opening 'just one more article' leads down a rabbit hole of wasted work hours.",
+    "tags": [
+      "articles",
+      "multitasking",
+      "temptation-bundling",
+      "pocket"
+    ],
+    "source": "Indistractable, Chapter 20"
+  },
+  {
+    "id": "card_58",
+    "title": "Eradicate Distracting Social Feeds",
+    "principle": "Social media feeds are engineered with variable rewards to trap attention; using feed-blocker extensions lets you use utilities without feed rabbit holes.",
+    "action": "Install browser extensions (e.g., News Feed Eradicator) to eliminate feeds while preserving search and group utilities.",
+    "use_when": "When you need to use social media for business or messaging but get sucked into endless news feeds.",
+    "tags": [
+      "feed-eradicator",
+      "social-media",
+      "external-triggers",
+      "focus"
+    ],
+    "source": "Indistractable, Chapter 21"
+  },
+  {
+    "id": "card_59",
+    "title": "Implement Tech Effort Pacts",
+    "principle": "Using tech tools to block tech distractions adds physical effort to unwanted behaviors, preventing impulsive slacking.",
+    "action": "Use blocking software (e.g., SelfControl, Freedom, or Forest) to lock out distracting websites during focus timeboxes.",
+    "use_when": "When digital temptations are a single click away, repeatedly breaking your deep work sessions.",
+    "tags": [
+      "effort-pacts",
+      "precommitment",
+      "blocking-apps",
+      "focus"
+    ],
+    "source": "Indistractable, Chapter 23"
+  },
+  {
+    "id": "card_60",
+    "title": "Adopt an 'Indistractable' Identity Pact",
+    "principle": "Aligning choices with a chosen self-identity makes behaviors automatic; adopting the moniker 'indistractable' provides a clear rationale for boundaries.",
+    "action": "Publicly adopt the identity of being 'indistractable', proudly sharing your timebox boundaries and focus rituals with others.",
+    "use_when": "When feeling embarrassed or pressured by others for setting strict focus boundaries.",
+    "tags": [
+      "identity-pacts",
+      "moniker",
+      "precommitment",
+      "mindset"
+    ],
+    "source": "Indistractable, Chapter 25"
+  }
+]

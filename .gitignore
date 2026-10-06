@@ -1,0 +1,27 @@
+# Generated build output and local caches, in every module.
+build/
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+
+# Machine-specific SDK paths and Android Studio state.
+local.properties
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local credentials and signing material.
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Source, design resources, documentation, Room schemas and Gradle wrapper stay tracked.

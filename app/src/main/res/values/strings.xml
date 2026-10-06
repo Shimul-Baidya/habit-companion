@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">HabitFlow</string>
+
+    <!-- SCR-01 Splash -->
+    <string name="splash_tagline">Habits stay on the device</string>
+    <string name="splash_brand_mark">HabitFlow</string>
+
+    <!-- SCR-02 Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_restore">Restore a backup</string>
+    <string name="onboarding_pane_indicator">Pane %1$d of %2$d</string>
+
+    <string name="onboarding_title_1">One tap a day</string>
+    <string name="onboarding_body_1">HabitFlow asks for a single tap per habit. Tap the ring when you have done it — that is the whole interaction.</string>
+
+    <string name="onboarding_title_2">Watch the chain grow</string>
+    <string name="onboarding_body_2">Every tap extends a streak. The longer the chain gets, the more it is worth protecting, and the app keeps it in front of you.</string>
+
+    <string name="onboarding_title_3">A Coach that reads the pattern</string>
+    <string name="onboarding_body_3">When a streak breaks, the Coach looks at the last 30 days and suggests a smaller goal. Your habits never leave this device.</string>
+
+    <!-- Greeting, shared by SCR-03 and SCR-04 -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_no_name">there</string>
+
+    <!-- SCR-03 Home, empty -->
+    <string name="empty_title">No habits yet</string>
+    <string name="empty_body">Start with one. A habit you could do on your worst day is the one that survives.</string>
+    <string name="empty_add_first">Add your first habit</string>
+    <string name="empty_coach_title">Not sure where to start?</string>
+    <string name="empty_coach_body">Let the Coach size your first habit.</string>
+    <string name="empty_tab_disabled">Add a habit first — there is nothing to show here yet.</string>
+
+    <!-- SCR-04 Home, today -->
+    <string name="home_section_today">Today</string>
+    <string name="home_counter">%1$d of %2$d</string>
+    <string name="home_streak_label">Best streak</string>
+    <string name="home_needs_attention">Needs attention</string>
+    <string name="home_add_habit">Add habit</string>
+    <string name="home_toggle_habit">Mark %1$s done for today</string>
+    <string name="home_today_ring">%1$d of %2$d habits done today</string>
+    <string name="home_all_done">All done for today</string>
+    <string name="home_db_error">Could not open your habits. Tap to retry.</string>
+    <string name="home_retry">Retry</string>
+
+    <plurals name="streak_days">
+        <item quantity="one">%1$d day streak</item>
+        <item quantity="other">%1$d day streak</item>
+    </plurals>
+
+    <string name="frequency_daily">Every day</string>
+    <string name="frequency_days_a_week">%1$d days a week</string>
+
+    <!-- Bottom nav, C-09 -->
+    <string name="tab_home">Home</string>
+    <string name="tab_progress">Progress</string>
+    <string name="tab_coach">Coach</string>
+    <string name="tab_profile">Profile</string>
+
+    <!-- Destinations not built yet -->
+    <string name="not_built_title">Coming next</string>
+    <string name="not_built_body">%1$s is specified in the deck and is not built yet.</string>
+
+    <!-- SCR-05 stub -->
+    <string name="new_habit_title">New habit</string>
+    <string name="new_habit_name_label">Habit name</string>
+    <string name="new_habit_create">Create habit</string>
+    <string name="new_habit_stub_note">Stub for SCR-05. Icon, colour, frequency and the Coach card are specified on slide 12 and are not built yet.</string>
+    <string name="back">Back</string>
+</resources>

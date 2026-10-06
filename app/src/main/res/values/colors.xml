@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The one hex value outside Color.kt, and it is the same token: on.surface.
+        SCR-01 specifies it as the window background so the cold-launch frame is already
+        the splash, with no white flash before Compose draws.
+    -->
+    <color name="splash_background">#0D1B1E</color>
+</resources>

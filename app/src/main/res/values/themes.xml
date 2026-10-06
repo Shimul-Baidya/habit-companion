@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        The window theme only has to cover the frames before Compose draws, which is
+        always SCR-01. It is therefore dark regardless of the device theme, with light
+        system-bar icons to match; HabitTheme takes over from the first composition.
+    -->
+    <style name="Theme.Habit" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
