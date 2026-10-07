@@ -2,6 +2,18 @@ package com.example.habit.ui.screens.coach
 
 import com.example.habit.coach.CoachFailure
 
+internal fun CoachUiState.inputStatus(): String = when {
+    !enabled -> "Enable Coach in Profile to send a question."
+    localError -> "Retry loading Coach data before sending."
+    loading -> "Sending…"
+    busy -> "Finishing your change…"
+    now < retryAt -> (failure?.let { "${it.headline()}. " } ?: "") +
+        "You can send again in ${((retryAt - now - 1) / 1_000) + 1}s."
+    failure == CoachFailure.InsufficientContext -> "Ask about starting, remembering or scheduling."
+    failure != null -> "${failure.headline()}. Try again."
+    else -> "Ask your own question. Mention the activity for specific advice."
+}
+
 object CoachRetryPolicy {
     fun delayMillis(attempt: Int, failure: CoachFailure): Long = if (
         failure == CoachFailure.InsufficientContext || failure == CoachFailure.InvalidInput) 0L else maxOf(

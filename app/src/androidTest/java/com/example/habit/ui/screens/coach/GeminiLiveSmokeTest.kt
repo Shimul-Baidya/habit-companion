@@ -158,7 +158,10 @@ class GeminiLiveSmokeTest {
         frame { CoachScreen(vm, {}) }
         compose.waitUntil(5000) { vm.state.value.canRequest }
         val question = "My phone distracts me while reading. How can I concentrate without reducing my reading goal?"
-        compose.runOnIdle { vm.question(question); vm.send(); vm.send() }
+        compose.onNodeWithTag("coach-question").performClick()
+        compose.onNodeWithTag("coach-question").performTextInput(question)
+        compose.onNodeWithContentDescription("Send question").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.runOnIdle { vm.send() }
         waitForResponse(vm)
         compose.waitUntil(5000) { vm.state.value.messages.any { !it.user } }
         val reply = vm.state.value.messages.last { !it.user }.text

@@ -50,8 +50,10 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
     var privacy by rememberSaveable { mutableStateOf(false) }
     val applied = state.receipt != null
     var shownReceipt by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(state.receipt?.id, state.messages.lastOrNull()?.id, state.loading) {
-        if (applied && shownReceipt != state.receipt.id) {
+    LaunchedEffect(state.receipt?.id, state.messages.lastOrNull()?.id, state.loading, state.failure, state.localError) {
+        if (state.failure != null || state.localError) {
+            list.animateScrollToItem(1)
+        } else if (applied && shownReceipt != state.receipt.id) {
             shownReceipt = state.receipt.id
             list.animateScrollToItem(2 + (if (state.cachedAt != null) 1 else 0) + (if (state.operationError != null) 1 else 0))
         } else if (state.messages.any { it.user } && !state.loading) {
@@ -69,10 +71,14 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
         bottomBar = {
             Column(Modifier.navigationBarsPadding().imePadding()) {
                 if (state.ready && !state.missing) {
+                    Text(state.inputStatus(), style = HabitTheme.type.caption, color = colors.onSurfaceMuted,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter).padding(top = 8.dp)
+                            .testTag("coach-input-status"))
                     Row(Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter).padding(top = 8.dp, bottom = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(state.question, onQuestion, enabled = state.enabled && !state.busy,
-                            placeholder = { Text("Ask about this habit…", style = HabitTheme.type.caption) },
+                            label = { Text("Your question", style = HabitTheme.type.caption) },
+                            placeholder = { Text("Type your question…", style = HabitTheme.type.caption) },
                             textStyle = HabitTheme.type.body, shape = Radius.pill, maxLines = 4,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             keyboardActions = KeyboardActions(onSend = { if (state.canRequest && state.question.isNotBlank()) { keyboard?.hide(); onSend() } }),
@@ -82,7 +88,13 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("coach-question").semantics { contentDescription = "Question for Coach" })
                         FilledIconButton(onClick = { keyboard?.hide(); onSend() }, enabled = state.canRequest && state.question.isNotBlank(),
                             colors = IconButtonDefaults.filledIconButtonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
-                            modifier = Modifier.size(48.dp)) { Icon(Icons.AutoMirrored.Filled.Send, "Send question", Modifier.size(20.dp)) }
+                            modifier = Modifier.size(48.dp).semantics { contentDescription = "Send question" }) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (state.loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = colors.onSurfaceMuted)
+                                else Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp))
+                                Text("Send", style = HabitTheme.type.micro.copy(letterSpacing = 0.sp))
+                            }
+                        }
                     }
                 }
                 if (!WindowInsets.isImeVisible) bottomNavigation()

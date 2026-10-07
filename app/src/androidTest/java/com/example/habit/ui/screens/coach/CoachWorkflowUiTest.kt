@@ -303,6 +303,56 @@ class CoachWorkflowUiTest {
         assertEquals(3, calls.get())
         assertTrue(restored.state.value.messages.any { it.text == first })
     }
+    @Test fun freshReadingHabitCanTypeItsOwnQuestionAndSendWithButtonAndKeyboard() {
+        val id = runBlocking { history.create(HabitDraft("Read", HabitSettings(HabitSchedule.Daily, TrackingMode.Binary))) }
+        val vm = model(id); screen(vm, dark = true, small = true)
+        assertEquals(0, calls.get())
+        compose.onNodeWithTag("coach-input-status").assertTextEquals("Ask about starting, remembering or scheduling.")
+        compose.onNodeWithContentDescription("Send question").assertIsNotEnabled()
+        compose.onNodeWithTag("coach-question").performClick()
+        compose.onNodeWithTag("coach-question").performTextInput("My phone distracts me while reading. How can I concentrate?")
+        compose.onNodeWithContentDescription("Send question").assertIsEnabled().performClick()
+        compose.waitUntil(5000) { calls.get() == 1 && !vm.state.value.loading && vm.state.value.messages.any { it.text.contains("another room") } }
+        compose.onNodeWithTag("coach-question").performTextInput("How can I remember to start reading?")
+        compose.onNodeWithTag("coach-question").performImeAction()
+        compose.waitUntil(5000) { calls.get() == 2 && !vm.state.value.loading && vm.state.value.question.isEmpty() }
+        assertEquals("How can I remember to start reading?", requests.last().question)
+        assertEquals(0, runBlocking { history.record(id)!!.completions.size })
+        assertNull(vm.state.value.receipt)
+        capture("custom-question-dark-small")
+    }
+    @Test fun inputShowsCooldownRetainsCustomQuestionAndAllowsSendingWhenItExpires() {
+        val vm = model(habit()); screen(vm)
+        failure = CoachFailure.RateLimited(60)
+        compose.onNodeWithTag("coach-question").performTextInput("How can I remember to start reading?")
+        compose.onNodeWithContentDescription("Send question").performClick()
+        compose.waitUntil(5000) { vm.state.value.failure is CoachFailure.RateLimited }
+        compose.onNodeWithTag("coach-input-status").assertTextEquals("The Coach needs a moment. You can send again in 60s.")
+        compose.onNodeWithContentDescription("Send question").assertIsNotEnabled()
+        assertEquals("How can I remember to start reading?", vm.state.value.question)
+        capture("input-cooldown-light-reference")
+        now = now.plusSeconds(60); failure = null
+        compose.waitUntil(5000) { vm.state.value.canRequest }
+        compose.onNodeWithContentDescription("Send question").assertIsEnabled().performClick()
+        compose.waitUntil(5000) { calls.get() == 3 && !vm.state.value.loading && vm.state.value.question.isEmpty() }
+        assertEquals(requests[1].question, requests[2].question)
+    }
+    @Test fun failureAfterConversationIsVisibleAndRetainsTheUnsentQuestion() {
+        val vm = model(habit()); screen(vm)
+        compose.onNodeWithTag("coach-question").performTextInput("My phone distracts me while reading. How can I concentrate?")
+        compose.onNodeWithContentDescription("Send question").performClick()
+        compose.waitUntil(5000) { calls.get() == 2 && !vm.state.value.loading && vm.state.value.messages.any { it.user } }
+        compose.waitForIdle()
+        failure = CoachFailure.ServerError
+        compose.onNodeWithTag("coach-question").performTextInput("How can I remember to start reading?")
+        compose.onNodeWithContentDescription("Send question").performClick()
+        compose.waitUntil(5000) { vm.state.value.failure == CoachFailure.ServerError }
+        compose.onNodeWithText("The Coach is unavailable").assertIsDisplayed()
+        compose.onNodeWithTag("coach-input-status").assertTextEquals("The Coach is unavailable. You can send again in 3s.")
+        assertEquals("How can I remember to start reading?", vm.state.value.question)
+        assertNotNull(vm.state.value.response)
+        capture("conversation-send-error-light-reference")
+    }
     @Test fun strictStoredContextRejectsTamperingAndPreservesDatedReading() {
         val id = habit(); val request = (CoachRequestBuilder.existing(catalog, runBlocking { history.record(id)!!.toHistory() }, day, enabled = true) as RequestResult.Ready).request
         val payload = CoachJson.payload(request)

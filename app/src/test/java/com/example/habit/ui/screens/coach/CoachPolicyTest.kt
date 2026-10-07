@@ -5,6 +5,20 @@ import org.junit.Test
 import org.junit.Assert.*
 
 class CoachPolicyTest {
+    @Test fun inputExplainsSendingAndCooldownAndKeepsLocalFailuresHonest() {
+        val ready = CoachUiState(ready = true, enabled = true, now = 10_000)
+        assertEquals("Ask your own question. Mention the activity for specific advice.", ready.inputStatus())
+        assertEquals("Sending…", ready.copy(loading = true).inputStatus())
+        assertEquals("You can send again in 3s.", ready.copy(retryAt = 12_001).inputStatus())
+        assertEquals("You can send again in 1s.", ready.copy(retryAt = 10_001).inputStatus())
+        assertEquals(ready.inputStatus(), ready.copy(retryAt = 10_000).inputStatus())
+        assertEquals("Retry loading Coach data before sending.", ready.copy(localError = true).inputStatus())
+        assertEquals("Enable Coach in Profile to send a question.", ready.copy(enabled = false).inputStatus())
+        assertEquals("Ask about starting, remembering or scheduling.", ready.copy(failure = CoachFailure.InsufficientContext).inputStatus())
+        assertEquals("The Coach needs a moment. You can send again in 3s.",
+            ready.copy(failure = CoachFailure.RateLimited(3), retryAt = 13_000).inputStatus())
+        assertEquals("The Coach is unavailable. Try again.", ready.copy(failure = CoachFailure.ServerError).inputStatus())
+    }
     @Test fun exponentialCooldownIsBoundedAndHonorsProviderDelay() {
         assertEquals(3000L, CoachRetryPolicy.delayMillis(1, CoachFailure.Timeout))
         assertEquals(6000L, CoachRetryPolicy.delayMillis(2, CoachFailure.Offline))
