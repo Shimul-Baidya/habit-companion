@@ -67,7 +67,7 @@ Legacy v1 rows marked Weekly also need inspection before migration because the o
 | 09 | Supplied strategy retrieval and Coach contracts | 01–04, supplied resource | Complete |
 | 10 | Typed action execution, local history and Undo | 02, 04, 08–09 | Complete |
 | 11 | Coach screens, draft detours and root selection | 05–07, 09–10 | Complete |
-| 12 | Real external AI service integration | 09–11, AI configuration resolved | Complete |
+| 12 | Real external AI service integration | 09–11, AI configuration resolved | Original integration complete; Coach follow-up Pixel checks pending |
 | 13 | End-to-end verification and design completion | All preceding chunks | Not started |
 
 Execute in the listed order. Dependencies describe correctness requirements, not an instruction to delegate or create additional chats. The early contract work is part of implementation, not another broad requirements-review project.
@@ -410,3 +410,12 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - **Evidence/limits:** supplied Coach/privacy/flow/mockup composition inspected against actual light 393×832dp and dark 360×640dp/font-1.5 screenshots, native IME/Send and returned-form Undo assertions. Reports/captures/synthetic outgoing request shapes: `app/build/reports/chunk12-verification/{local-device,live-device,final-device,captures}`; commands in HANDOFF.md. No credential in tracked/nonignored files/captured bodies/logs; key remains only authorised ignored local/generated build material. Catalog source/APK bytes/digest match; retained app/cold launch and diff check passed. Build daemon stopped to free memory; Android Studio can be closed. Controlled clocks/forced layout do not prove arbitrary process death/all OEMs. Provider quota/safety/network outages are deterministically tested, not forced live. No required chunk 12 work is incomplete.
 - **Next:** chunk 13, full flow/migration/design/accessibility/platform verification and private demo build; obtain owner permission first and preserve Gemini quota. No automatic continuation.
 - **Suggested one-line commit:** `feat: integrate Gemini Coach for the private academic demo`
+
+### Chunk 12 — Owner-reported Coach follow-up, 7 October 2026
+
+- **Scope:** owner authorised fixing Karate's confirmed insufficient-context state and generic specific-question replies within chunk 12, completing non-device checks now and Pixel 7 checks after reconnection. Chunk 13 remains unauthorised.
+- **Implemented:** explicit short-history starting-help action, no fabricated measured patterns/no added outbound context; question-first relevant ranking with narrow vocabulary bridges; exact legacy ranking retained for old request/cache/receipt validation; true `NO_SETTLED_HISTORY` fact for zero-settled/rest-day summaries; generated advice displayed directly for nonblank-question conversation bubbles; question-specific provider instructions and app-rule explanations; immediate revised-input access without consuming network backoff attempts. Room/database/preferences/source resources/draft envelopes and typed Apply/Undo are preserved.
+- **Checks:** app/test APK compilation, all 163 JVM tests and lint (zero errors/26 existing advisories) passed. Seven new JVM regressions use the actual supplied 60-card vocabulary and cover both modes/all schedules, honest weak context, question priority, rest-day facts, conversation text, deterministic/legacy ranking and local cooldown. Four added Android cases and two opt-in live cases compile but remain unexecuted. See handoff for final command/evidence and pending Pixel commands; no extra Gemini requests or Git operations.
+- **Remaining:** Pixel runtime, native input/Back, short-history action, cache replay, visual review and two isolated live responses for the changed paths. No installed AVD/system image is available. Preserve the earlier chunk 12 device evidence as historical; do not claim it verifies these fixes.
+- **Suggested one-line commit:** `fix: make Coach starting help and follow-up advice relevant`
+- **Next:** complete already-authorised Pixel checks when reconnected, then ask permission for chunk 13 full-flow/migration/design/accessibility/platform verification.

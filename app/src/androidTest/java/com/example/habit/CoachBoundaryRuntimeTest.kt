@@ -76,6 +76,21 @@ class CoachBoundaryRuntimeTest {
         assertTrue(email.request.strategies.all { it.applicability == Applicability.QUESTION_OPTION })
         assertEquals(setOf("card_22", "card_26", "card_51"), email.request.strategies.map { it.card.id }.toSet())
     }
+    @Test fun legacyQuestionCachesStillValidateButAlteredCardsDoNot() {
+        val c = catalog(); val context = existing(c).context; val question = "How can I remember to start?"
+        val old = (StrategyRetriever.legacyRetrieve(c, context, question) as RetrievalResult.Ready).strategies
+        val current = (StrategyRetriever.retrieve(c, context, question) as RetrievalResult.Ready).strategies
+        assertNotEquals(old, current)
+        for (cards in listOf(old, current)) {
+            val request = CoachRequest(context, question, cards, c.sha256)
+            val payload = CoachJson.payload(request)
+            val restored = CoachJson.storedRequest(payload, c.sha256, c)!!
+            assertEquals(payload, CoachJson.payload(restored))
+            assertTrue(CoachJson.response(response(request).toString(), restored, c) is ResponseResult.Valid)
+            val altered = JSONObject(payload).apply { getJSONArray("strategies").getJSONObject(0).put("title", "invented") }
+            assertNull(CoachJson.storedRequest(altered.toString(), c.sha256, c))
+        }
+    }
     @Test fun existingWirePayloadContainsOnlyOneMeasuredSummaryAndQuestionNotRecordFields() {
         val c = catalog(); val q = TrackingMode.Quantity(BigDecimal("5.00"), "pages")
         val h = history(tracking = q).let { it.copy(logs = listOf(HabitLog(today.minusDays(1), CompletionValue.Quantity(BigDecimal("2"), "pages")))) }

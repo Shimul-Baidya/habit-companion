@@ -86,6 +86,20 @@ class GeminiTransportTest {
         assertFalse(schema.contains("NEW_HABIT_COUNT")); assertFalse(schema.contains("PLANNING_DRAFT"))
         assertFalse(schema.contains("TOO_MANY_NEW_HABITS"))
     }
+    @Test fun freshRestDayRequestHasNonemptyTrueFactSchemaAndNoAddedOutboundContext() {
+        val day = LocalDate.of(2026, 10, 7)
+        val history = HabitHistory(day, listOf(EffectiveSettings(day, HabitSettings(HabitSchedule.Custom(setOf(java.time.DayOfWeek.MONDAY))))))
+        val request = (CoachRequestBuilder.existing(catalog(), history, day, "How can I make starting this habit easier?", true) as RequestResult.Ready).request
+        val body = JSONObject(GeminiWire.body(request))
+        val schema = body.getJSONObject("generationConfig").getJSONObject("responseJsonSchema")
+        val facts = schema.getJSONObject("properties").getJSONObject("reading").getJSONObject("properties").getJSONObject("facts")
+        assertEquals(1, facts.getInt("maxItems"))
+        assertEquals("NO_SETTLED_HISTORY", facts.getJSONObject("items").getJSONArray("enum").getString(0))
+        assertTrue(CoachJson.response(valid(request), request, catalog()) is ResponseResult.Valid)
+        val payload = JSONObject(body.getJSONArray("contents").getJSONObject(0).getJSONArray("parts").getJSONObject(0).getString("text"))
+        assertEquals(setOf("contractVersion", "mode", "context", "question", "strategies"), keys(payload))
+        assertFalse(payload.getJSONObject("context").has("name")); assertFalse(payload.getJSONObject("context").has("messages"))
+    }
     @Test fun successfulProviderResponseStillPassesTheOriginalStrictContractAndDispatchesOnce() = runBlocking {
         val request = planning(); val calls = AtomicInteger()
         val service = GeminiCoachService("synthetic-key", "gemini-3.5-flash-lite", GeminiTransport { url, key, body ->

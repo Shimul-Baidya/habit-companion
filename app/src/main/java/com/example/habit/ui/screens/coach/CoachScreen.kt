@@ -109,7 +109,10 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
                 Crossfade(targetState = state.failure, animationSpec = tween(200), label = "Coach error") { failure ->
                     when {
                         state.localError -> CoachFailureCard(CoachFailure.ServerError, "Couldn't read local Coach data. Local habits and history remain available.", true, onRetry)
-                        failure != null -> CoachFailureCard(failure, failure.explanation(), state.canRequest, onRetry)
+                        failure != null -> CoachFailureCard(failure, failure.explanation(), state.canRequest,
+                            if (failure == CoachFailure.InsufficientContext) {
+                                { onQuestion("How can I make starting this habit easier?"); onSend() }
+                            } else onRetry)
                         state.loading || !state.ready -> ReadingShimmer()
                         state.response == null -> Column {
                             Text("Ready when you are. Local habits and history remain available.", style = HabitTheme.type.body, color = colors.onSurfaceMuted)
@@ -228,7 +231,7 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
         Text(explanation, style = HabitTheme.type.body, color = colors.onSurfaceMuted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
         if (failure != CoachFailure.Disabled && failure != CoachFailure.Unconfigured) OutlinedButton(onClick = onRetry, enabled = retry,
             shape = Radius.pill, border = BorderStroke(2.dp, colors.primary), modifier = Modifier.padding(top = 24.dp).heightIn(min = 52.dp)) {
-            Text(if (retry) "Try again" else "Please wait…", color = colors.primary)
+            Text(if (!retry) "Please wait…" else if (failure == CoachFailure.InsufficientContext) "Help me get started" else "Try again", color = colors.primary)
         }
     }
 }

@@ -144,7 +144,7 @@ class CoachViewModel(
                                         val card = requireNotNull(c.byId[s.strategyId])
                                         "${s.title}: ${s.advice}\n${card.title}\nSupplied attribution: ${card.source}"
                                     }
-                                    it.readingText()
+                                    it.conversationText(requireNotNull(original).question)
                                 } ?: "Saved Coach response is unavailable."
                             } else message.text
                             CoachBubble(message.id, message.role == "USER", text, details)
@@ -260,10 +260,12 @@ class CoachViewModel(
         if (state.value.response != null && state.value.cachedAt == null) {
             mutable.update { it.copy(cachedAt = localCache?.createdAt ?: saved.get<Long>("cachedAt")) }
         }
-        val attempt = (saved.get<Int>("attempt") ?: 0) + 1
+        val localInputFailure = failure == CoachFailure.InsufficientContext || failure == CoachFailure.InvalidInput
+        val attempt = (saved.get<Int>("attempt") ?: 0) + if (localInputFailure) 0 else 1
         saved["failure"] = CoachFailureState.encode(failure)
         saved["rateSeconds"] = (failure as? CoachFailure.RateLimited)?.retryAfterSeconds
         saved["attempt"] = attempt
+        // Local context/input checks send nothing; a useful revised question can be sent immediately.
         val deadline = clock.millis() + CoachRetryPolicy.delayMillis(attempt, failure)
         saved["retryAt"] = deadline
         mutable.update { it.copy(failure = failure, loading = false, retryAt = deadline) }

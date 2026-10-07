@@ -101,11 +101,17 @@ class CoachWorkflowUiTest {
             summary == null -> "PLANNING_DRAFT"
             summary.missed > 0 -> "RECENT_MISSES"
             summary.completed > 0 -> "RECENT_COMPLETIONS"
-            else -> "OPEN_EXPECTATIONS"
+            summary.pending > 0 -> "OPEN_EXPECTATIONS"
+            else -> "NO_SETTLED_HISTORY"
+        }
+        val advice = when {
+            request.question.contains("phone") -> "If your phone interrupts reading, put it in another room before opening the book."
+            request.question.contains("kit") -> "If packing slips your mind, leave your karate kit beside the door before class."
+            else -> "If it fits, prepare a small step before starting."
         }
         return json("reading" to json("facts" to JSONArray(listOf(fact)), "possibleBarrier" to "UNCLEAR_CUE"),
             "suggestions" to JSONArray(request.strategies.mapIndexed { index, strategy ->
-                json("strategyId" to strategy.card.id, "title" to "Try a clear plan ${index + 1}", "advice" to "If it fits, prepare a small step before starting.",
+                json("strategyId" to strategy.card.id, "title" to "Try a clear plan ${index + 1}", "advice" to advice,
                     "action" to json("type" to "PLAN", "note" to "Applied plan ${index + 1}"))
             })).toString()
     }
@@ -266,6 +272,36 @@ class CoachWorkflowUiTest {
         val vm = model(id); screen(vm)
         assertEquals(CoachFailure.InsufficientContext, vm.state.value.failure); assertEquals(0, calls.get())
         compose.onNodeWithText("Not enough context yet").assertIsDisplayed()
+    }
+    @Test fun karateWithoutHistoryCanExplicitlyRequestStartingHelpAndSendsOnce() {
+        // A Custom rest day exercises the formerly empty fact enum as well as short-history retrieval.
+        val id = runBlocking { history.create(HabitDraft("Karate", HabitSettings(HabitSchedule.Custom(setOf(DayOfWeek.MONDAY)), TrackingMode.Binary))) }
+        val vm = model(id); screen(vm, dark = true, small = true)
+        assertEquals(0, calls.get()); assertEquals(CoachFailure.InsufficientContext, vm.state.value.failure)
+        assertTrue(vm.state.value.canRequest)
+        capture("karate-insufficient-dark-small")
+        compose.onNodeWithTag("coach-list").performScrollToNode(hasText("Help me get started"))
+        compose.onNodeWithText("Help me get started").assertIsEnabled().performClick()
+        compose.waitUntil(5000) { vm.state.value.response != null && !vm.state.value.loading }
+        assertEquals(1, calls.get()); assertEquals("How can I make starting this habit easier?", requests.single().question)
+        assertTrue(requests.single().strategies.all { it.applicability == Applicability.QUESTION_OPTION })
+        assertEquals(listOf(ReadingFact.NO_SETTLED_HISTORY), vm.state.value.response!!.value.reading.facts)
+        assertEquals(0, runBlocking { history.record(id)!!.completions.size })
+        assertNull(vm.state.value.receipt)
+    }
+    @Test fun followUpBubblesShowSpecificAdviceAndReentryUsesSavedOriginalResponse() {
+        val id = habit(); val vm = model(id); screen(vm)
+        compose.runOnIdle { vm.question("My phone distracts me while reading. How can I concentrate?"); vm.send(); vm.send() }
+        compose.waitUntil(5000) { calls.get() == 2 && !vm.state.value.loading && vm.state.value.messages.any { it.text.contains("another room") } }
+        val first = vm.state.value.messages.last { !it.user }.text
+        assertFalse(first.contains("required occurrences missed"))
+        compose.runOnIdle { vm.question("How can I remember to pack my karate kit before class?"); vm.send() }
+        compose.waitUntil(5000) { calls.get() == 3 && !vm.state.value.loading && vm.state.value.messages.any { it.text.contains("kit beside the door") } }
+        assertNotEquals(requests[1].strategies.map { it.card.id }, requests[2].strategies.map { it.card.id })
+        val restored = model(id); ready(restored)
+        compose.waitUntil(5000) { restored.state.value.messages.any { it.text.contains("kit beside the door") } }
+        assertEquals(3, calls.get())
+        assertTrue(restored.state.value.messages.any { it.text == first })
     }
     @Test fun strictStoredContextRejectsTamperingAndPreservesDatedReading() {
         val id = habit(); val request = (CoachRequestBuilder.existing(catalog, runBlocking { history.record(id)!!.toHistory() }, day, enabled = true) as RequestResult.Ready).request

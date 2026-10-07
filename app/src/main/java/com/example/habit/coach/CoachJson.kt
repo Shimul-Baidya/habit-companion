@@ -152,7 +152,8 @@ object CoachJson {
         }
         require(cards.size == 3 && cards.map { it.card.id }.distinct().size == 3)
         val question = CoachLimits.text(root["question"].text(), CoachLimits.QUESTION, true)
-        require((StrategyRetriever.retrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
+        require((StrategyRetriever.retrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards ||
+            (StrategyRetriever.legacyRetrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
         CoachRequest(context, question, cards, digest)
     }.getOrNull()
 

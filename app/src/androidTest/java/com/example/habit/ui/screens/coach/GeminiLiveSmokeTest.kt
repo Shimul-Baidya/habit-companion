@@ -129,6 +129,38 @@ class GeminiLiveSmokeTest {
         }
         assertEquals(1, calls.get()); capture("live-returned-form")
     }
+    @Test fun liveFreshKarateStarterHasHonestRestDayFactsAndNoImplicitApply() {
+        val id = runBlocking { history.create(HabitDraft("Synthetic practice", HabitSettings(HabitSchedule.Custom(setOf(java.time.DayOfWeek.MONDAY))))) }
+        val vm = model(id)
+        frame(dark = true, small = true) { CoachScreen(vm, {}) }
+        compose.waitUntil(5000) { vm.state.value.failure == CoachFailure.InsufficientContext }
+        assertEquals(0, calls.get())
+        compose.onNodeWithTag("coach-list").performScrollToNode(hasText("Help me get started"))
+        compose.onNodeWithText("Help me get started").performClick()
+        waitForResponse(vm)
+        assertTrue(submitted!!.strategies.all { it.applicability == Applicability.QUESTION_OPTION })
+        assertEquals(listOf(ReadingFact.NO_SETTLED_HISTORY), vm.state.value.response!!.value.reading.facts)
+        assertNull(vm.state.value.receipt)
+        assertTrue(runBlocking { history.record(id)!!.completions }.isEmpty())
+        capture("live-fresh-starter-dark-small")
+    }
+    @Test fun liveSpecificReadingQuestionShowsGeneratedAdviceInConversationAndSendsOnce() {
+        val id = runBlocking { history.create(HabitDraft("Synthetic reading", HabitSettings(HabitSchedule.Daily))) }
+        val vm = model(id, SavedStateHandle(mapOf("entered" to true)))
+        frame { CoachScreen(vm, {}) }
+        compose.waitUntil(5000) { vm.state.value.canRequest }
+        val question = "My phone distracts me while reading. How can I concentrate without reducing my reading goal?"
+        compose.runOnIdle { vm.question(question); vm.send(); vm.send() }
+        waitForResponse(vm)
+        compose.waitUntil(5000) { vm.state.value.messages.any { !it.user } }
+        val reply = vm.state.value.messages.last { !it.user }.text
+        assertEquals(vm.state.value.response!!.conversationText(question), reply)
+        assertFalse(reply.contains("required occurrences are still pending"))
+        assertTrue(submitted!!.strategies.all { it.applicability == Applicability.QUESTION_OPTION })
+        assertNull(vm.state.value.receipt)
+        capture("live-specific-reading-conversation")
+        // Semantics/quality of the captured advice is reviewed by a human, not a keyword oracle.
+    }
     @Test fun liveWeeklyQuantityPersistsValidatedCacheAppliesUndoesAndReentrySendsNothing() {
         val database = db!!
         val oldClock = Clock.fixed(day.minusDays(14).atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)

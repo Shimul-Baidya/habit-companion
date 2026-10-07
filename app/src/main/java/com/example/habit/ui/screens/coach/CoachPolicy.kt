@@ -3,7 +3,8 @@ package com.example.habit.ui.screens.coach
 import com.example.habit.coach.CoachFailure
 
 object CoachRetryPolicy {
-    fun delayMillis(attempt: Int, failure: CoachFailure): Long = maxOf(
+    fun delayMillis(attempt: Int, failure: CoachFailure): Long = if (
+        failure == CoachFailure.InsufficientContext || failure == CoachFailure.InvalidInput) 0L else maxOf(
         (3_000L * (1L shl (attempt - 1).coerceIn(0, 5))).coerceAtMost(96_000L),
         if (failure is CoachFailure.RateLimited) failure.retryAfterSeconds * 1_000L else 0L)
 }
@@ -25,7 +26,7 @@ internal fun CoachFailure.explanation(): String = when (this) {
     CoachFailure.Offline -> "Suggestions need a connection. Try again when you're online."
     CoachFailure.Timeout -> "The request timed out. You can retry here."
     is CoachFailure.RateLimited -> "Please wait before trying again."
-    CoachFailure.InsufficientContext -> "There isn't enough measured history for three relevant options. Ask about a specific next step."
+    CoachFailure.InsufficientContext -> "There isn't enough context to choose three relevant strategies yet. Ask about starting, remembering or scheduling, or use Help me get started."
     CoachFailure.InvalidInput -> "Use a valid schedule and quantity target, and keep your question within 1,000 characters."
     CoachFailure.CatalogMissing, CoachFailure.CatalogInvalid -> "The local strategy library could not be read. Try again."
     CoachFailure.MalformedResponse -> "The response didn't pass validation. No suggestion was applied."

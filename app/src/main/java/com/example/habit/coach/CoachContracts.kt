@@ -126,7 +126,7 @@ sealed interface ReminderSetting {
 }
 
 /** Free-form causal readings are excluded. All hypotheses render using fixed conditional copy. */
-enum class ReadingFact { PLANNING_DRAFT, RECENT_COMPLETIONS, RECENT_MISSES, OPEN_EXPECTATIONS, PARTIAL_QUANTITIES, ATTENTION }
+enum class ReadingFact { PLANNING_DRAFT, RECENT_COMPLETIONS, RECENT_MISSES, OPEN_EXPECTATIONS, PARTIAL_QUANTITIES, ATTENTION, NO_SETTLED_HISTORY }
 enum class PossibleBarrier(val conditionalText: String) {
     STARTING_SIZE("If starting feels too large, a smaller first step may help."),
     UNCLEAR_CUE("If it is hard to remember when to start, a clear cue may help."),
@@ -148,10 +148,15 @@ class ValidatedCoachResponse internal constructor(val value: CoachResponse, priv
                 ReadingFact.OPEN_EXPECTATIONS -> "${requireNotNull(summary).pending} required occurrences are still pending."
                 ReadingFact.PARTIAL_QUANTITIES -> "Dates with amounts below their historical targets: ${requireNotNull(summary).partialQuantityDays}."
                 ReadingFact.ATTENTION -> "The occurrence history needs attention."
+                ReadingFact.NO_SETTLED_HISTORY -> "No settled required occurrences in this summary yet."
             })
         }
         value.reading.possibleBarrier?.let { add(it.conditionalText) }
     }.joinToString(" ")
+
+    /** A follow-up must show the generated advice, rather than repeating fixed measured copy. */
+    fun conversationText(question: String): String = if (question.isBlank()) readingText()
+        else value.suggestions.joinToString("\n\n") { "${it.title}: ${it.advice}" }
 }
 sealed interface ResponseResult {
     data class Valid(val response: ValidatedCoachResponse) : ResponseResult
@@ -179,6 +184,7 @@ object CoachResponseValidator {
     internal fun allowedFacts(context: CoachContext): Set<ReadingFact> = when (val c = context) {
             is CoachContext.Planning -> setOf(ReadingFact.PLANNING_DRAFT)
             is CoachContext.Existing -> buildSet {
+                if (c.summary.completed == 0 && c.summary.missed == 0) add(ReadingFact.NO_SETTLED_HISTORY)
                 if (c.summary.completed > 0) add(ReadingFact.RECENT_COMPLETIONS)
                 if (c.summary.missed > 0) add(ReadingFact.RECENT_MISSES)
                 if (c.summary.pending > 0) add(ReadingFact.OPEN_EXPECTATIONS)

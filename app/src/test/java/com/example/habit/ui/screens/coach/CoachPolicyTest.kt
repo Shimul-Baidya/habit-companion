@@ -12,6 +12,11 @@ class CoachPolicyTest {
         assertEquals(3600000L, CoachRetryPolicy.delayMillis(1, CoachFailure.RateLimited(3600)))
         assertEquals(3000L, CoachRetryPolicy.delayMillis(1, CoachFailure.RateLimited(1)))
     }
+    @Test fun localInputChecksAllowARevisedQuestionWithoutANetworkCooldown() {
+        assertEquals(0L, CoachRetryPolicy.delayMillis(100, CoachFailure.InsufficientContext))
+        assertEquals(0L, CoachRetryPolicy.delayMillis(100, CoachFailure.InvalidInput))
+        assertEquals(60000L, CoachRetryPolicy.delayMillis(1, CoachFailure.RateLimited(60)))
+    }
     @Test fun everyErrorRetainsHonestLocalDataCopyAndDistinctHeading() {
         val errors = listOf(CoachFailure.Disabled, CoachFailure.Unconfigured, CoachFailure.CatalogMissing, CoachFailure.CatalogInvalid,
             CoachFailure.InsufficientContext, CoachFailure.InvalidInput, CoachFailure.MalformedResponse, CoachFailure.Offline,
