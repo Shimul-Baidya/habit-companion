@@ -431,7 +431,7 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - **Suggested one-line commit:** `fix: preserve archived Progress access and verify final integration`
 
 
-### Owner-reported Coach composer follow-up — complete, 7 October 2026
+### Owner-reported Coach composer follow-up — owner issue unresolved; investigation stopped, 7 October 2026
 
 - Owner requested investigation and a short improvement for custom Coach messages. Native typing on the connected Pixel enabled Send; existing starter question/reply were present. No failed dispatch was reproduced, so no transport defect/fix is claimed. The precise owner symptom remains unconfirmed pending their retest/clarification.
 - Added visible question/Send labels, minimal activity-context guidance and sending/retry countdown feedback without changing layout structure, provider/retrieval/payload, schema/history or Apply/Undo. Added fresh-reading button/IME and retained-input cooldown device regressions plus a JVM feedback check. Strengthened the existing live reading case to enter text/tap the visible button.
@@ -440,3 +440,13 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - Suggested one-line commit: `fix: make Coach sending and failures visible and verify custom messages`
 
 - Latest clarification: Send gives nothing visible or an error. Fixed failure scrolling that could hide an error above existing replies; show the failure headline next to the composer. Added a post-conversation error regression; final assembly/**165 JVM / 35 local Pixel cases**/lint passed, zero failures/errors/skips and zero lint errors/17 advisories. Installed APK hash matches the current build; version label remains 1.0. Exact original question/underlying rejection remains unspecified, with no fabricated transport diagnosis.
+
+- Owner retried and confirms the same Send problem. Passing synthetic checks do not establish that their issue is solved. Owner explicitly stopped further Coach investigation and requested a minimal app/favicon icon instead.
+
+
+### Minimal app icon / favicon — complete, 7 October 2026
+
+- Owner stopped Coach troubleshooting and requested a simple icon. Added a teal completion-check/leaf mark through existing adaptive/themed Android resources and regular/round legacy assets at all five densities. Included SVG/PNG source preview and small PNG/ICO favicons in artwork/. No Coach implementation change, dependency or original-resource change.
+- Preview/dimensions/XML/diff checks passed. Assembly/**165 JVM tests**/lint/install passed in 28s; zero test failures/errors/skips, lint zero errors/17 existing advisories. Updated app installed on Pixel 7; launch passed. Main database/preferences hashes match the prior record; WAL differs, so no full byte-identical storage claim. Legacy/themed visuals on other OS versions are not claimed; no new runtime suite or Gemini request.
+- Next: owner icon review, with small requested adjustments only. Coach problem remains unresolved and investigation is stopped at the owner's request.
+- Suggested one-line commit: `feat: add a minimal Habit Companion app icon and favicon`
