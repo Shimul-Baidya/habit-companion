@@ -14,22 +14,37 @@ object StrategyRetriever {
     private fun words(text: String) = Regex("[a-z0-9]+").findAll(text.lowercase(Locale.ROOT))
         .map { it.value }.filter { it.length >= 3 && it !in stop }.toSet()
     // Narrow vocabulary bridges to the supplied tags, not inferred personal circumstances.
-    private fun questionWords(question: String): Set<String> = words(question).toMutableSet().apply {
+    private fun questionWords(question: String, expanded: Boolean = true): Set<String> = words(question).toMutableSet().apply {
         val original = toSet()
         fun bridge(tokens: Set<String>, tags: Set<String>) { if (original.any { it in tokens }) addAll(tags) }
         bridge(setOf("forget", "forgetting", "forgot", "remember", "remembering", "reminder", "reminders"), setOf("cues", "triggers"))
         bridge(setOf("start", "starting", "begin", "beginning", "smaller", "simpler", "overwhelming", "overwhelmed"), setOf("starting", "simplicity"))
         bridge(setOf("schedule", "scheduling", "time", "busy"), setOf("scheduling", "timeboxing", "planning"))
         bridge(setOf("distracted", "distractions", "distracting", "concentrate", "concentration"), setOf("focus", "distraction", "control"))
+        if (expanded) {
+            bridge(setOf("consistent", "consistently", "consistency", "regular", "regularly", "stick", "sticking", "sustain", "sustaining"),
+                setOf("consistency", "routines", "tracking"))
+            bridge(setOf("miss", "missed", "missing", "skip", "skipped", "skipping", "relapse", "restart", "recover"),
+                setOf("recovery", "consistency"))
+            bridge(setOf("struggle", "struggling", "difficult", "difficulty", "hard", "effort"),
+                setOf("friction", "ease", "simplicity"))
+            bridge(setOf("unmotivated", "motivate", "motivated", "motivation", "boring", "bored", "tedious"),
+                setOf("motivation", "rewards", "engagement"))
+            bridge(setOf("strategize", "strategy", "strategies", "plan"), setOf("planning", "clarity"))
+        }
     }
     fun retrieve(catalog: StrategyCatalog, context: CoachContext, question: String): RetrievalResult {
-        return rank(catalog, context, questionWords(question), questionFirst = true)
+        return rank(catalog, context, questionWords(question), questionFirst = true, allowFewer = question.isNotBlank())
     }
+    /** Exact previous keyword gate retained only for already saved v1 exchanges/receipts. */
+    internal fun previousRetrieve(catalog: StrategyCatalog, context: CoachContext, question: String): RetrievalResult =
+        rank(catalog, context, questionWords(question, expanded = false), questionFirst = true)
     /** Exact original ranking retained solely to validate saved pre-fix requests/Apply receipts. */
     internal fun legacyRetrieve(catalog: StrategyCatalog, context: CoachContext, question: String): RetrievalResult =
         rank(catalog, context, words(question), questionFirst = false)
 
-    private fun rank(catalog: StrategyCatalog, context: CoachContext, query: Set<String>, questionFirst: Boolean): RetrievalResult {
+    private fun rank(catalog: StrategyCatalog, context: CoachContext, query: Set<String>, questionFirst: Boolean,
+        allowFewer: Boolean = false): RetrievalResult {
         val contextTags = when (context) {
             is CoachContext.Planning -> setOf("planning", "cues", "starting", "simplicity")
             is CoachContext.Existing -> when {
@@ -54,7 +69,7 @@ object StrategyRetriever {
         }.sortedWith(if (questionFirst) compareByDescending<Ranked> { it.questionScore >= 4 }
             .thenByDescending { it.questionScore }.thenByDescending { it.score }.thenBy { it.card.id }
             else compareByDescending<Ranked> { it.score }.thenBy { it.card.id })
-        if (ranked.size < 3) return RetrievalResult.Insufficient(ranked.size)
+        if (ranked.size < 3 && !allowFewer) return RetrievalResult.Insufficient(ranked.size)
         return RetrievalResult.Ready(ranked.take(3).map { AdmittedStrategy(it.card, it.applicability) })
     }
 }

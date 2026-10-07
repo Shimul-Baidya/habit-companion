@@ -33,7 +33,7 @@ class CoachBoundaryRuntimeTest {
         .put("possibleBarrier", "STARTING_SIZE"))
         .put("suggestions", JSONArray(request.strategies.map { JSONObject().put("strategyId", it.card.id)
             .put("title", "Try a smaller starting step").put("advice", "If starting is difficult, prepare one small step.")
-            .put("action", JSONObject().put("type", "PLAN").put("note", "Prepare a small starting step")) }))
+            .put("action", JSONObject().put("type", "PLAN").put("note", "Prepare a small starting step")) })).apply { if (request.contractVersion == 2) put("reply", "Prepare one small step if that fits your situation.") }
     private fun invalid(json: String, request: CoachRequest, c: StrategyCatalog) {
         assertEquals(json.take(80), ResponseResult.Invalid, CoachJson.response(json, request, c))
     }
@@ -110,6 +110,37 @@ class CoachBoundaryRuntimeTest {
         listOf("name", "habitId", "created", "logs", "date", "cue", "token", "bestStreak", "messages", "count").forEach {
             assertFalse("Unexpected automatic field $it", contextText.contains("\"$it\""))
         }
+    }
+    @Test fun freeTextReplyWithNoCardsRoundTripsAndRejectsUnsupportedActionsAndFields() {
+        val c = catalog()
+        val fresh = HabitHistory(today, listOf(EffectiveSettings(today, HabitSettings(HabitSchedule.Daily))))
+        val request = (CoachRequestBuilder.existing(c, fresh, today, "Hello", true) as RequestResult.Ready).request
+        assertEquals(2, request.contractVersion); assertTrue(request.strategies.isEmpty())
+        val payload = CoachJson.payload(request)
+        val restored = CoachJson.storedRequest(payload, c.sha256, c)!!
+        assertEquals(payload, CoachJson.payload(restored))
+        val raw = JSONObject().put("reading", JSONObject().put("facts", JSONArray(listOf("NO_SETTLED_HISTORY")))
+            .put("possibleBarrier", JSONObject.NULL)).put("reply", "Hello! What feels difficult about this habit?")
+            .put("suggestions", JSONArray())
+        val valid = CoachJson.response(raw.toString(), restored, c) as ResponseResult.Valid
+        assertEquals(raw.getString("reply"), valid.response.conversationText(request.question))
+        invalid(JSONObject(raw.toString()).apply { remove("reply") }.toString(), restored, c)
+        invalid(JSONObject(raw.toString()).put("reply", "").toString(), restored, c)
+        invalid(JSONObject(raw.toString()).put("reply", "x".repeat(CoachLimits.REPLY + 1)).toString(), restored, c)
+        invalid(JSONObject(raw.toString()).put("action", JSONObject().put("type", "PLAN")).toString(), restored, c)
+        invalid(JSONObject(raw.toString()).put("suggestions", JSONArray(listOf(JSONObject().put("strategyId", "card_11")
+            .put("title", "Apply").put("advice", "Do it").put("action", JSONObject().put("type", "PLAN").put("note", "Do it"))))).toString(), restored, c)
+        assertNull(CoachJson.storedRequest(JSONObject(payload).put("contractVersion", 1).toString(), c.sha256, c))
+        assertNull(CoachJson.storedRequest(JSONObject(payload).put("question", "").toString(), c.sha256, c))
+    }
+    @Test fun previousV1VocabularyStillReconstructsWithoutReinterpretingSavedStrategies() {
+        val c = catalog(); val context = existing(c).context; val question = "I struggle with consistency"
+        val cards = (StrategyRetriever.previousRetrieve(c, context, question) as RetrievalResult.Ready).strategies
+        val old = CoachRequest(context, question, cards, c.sha256)
+        val raw = response(old).toString()
+        val restored = CoachJson.storedRequest(CoachJson.payload(old), c.sha256, c)!!
+        assertEquals(1, restored.contractVersion); assertEquals(cards, restored.strategies)
+        assertTrue(CoachJson.response(raw, restored, c) is ResponseResult.Valid)
     }
     @Test fun planningWireWhitelistsPermittedDraftAndNecessaryTrackingQuotaFields() {
         val c = catalog(); val draft = HabitFormDraft(name = "My private draft", frequency = "WEEKLY", quota = "3",

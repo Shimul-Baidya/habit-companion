@@ -33,6 +33,16 @@ class DraftCoachActionTest {
     }
     private fun apply(value: Triple<CoachRequest, ValidatedCoachResponse, String>) = handler.apply("draft-token", value.third, 0, value.first, value.second, catalog)
     private fun change(next: HabitFormDraft) { handler.changed(draft, next); draft = next }
+    @Test fun conversationalReplyCannotApplyANonexistentDraftSuggestion() {
+        start()
+        val before = draft
+        val request = (CoachRequestBuilder.planning(catalog, draft, 2, "Hello", true) as RequestResult.Ready).request
+        val raw = CoachResponse(CoachReading(listOf(ReadingFact.PLANNING_DRAFT), null), emptyList(), "What would you like help with?")
+        val valid = (CoachResponseValidator.validate(raw, request, catalog) as ResponseResult.Valid).response
+        handler.beginInteraction("draft-token", "conversation", request)
+        assertTrue(runCatching { handler.apply("draft-token", "conversation", 0, request, valid, catalog) }.isFailure)
+        assertEquals(before, draft); assertNull(handler.receipt("conversation:0"))
+    }
 
     @Test fun eachAdmittedDraftActionUpdatesOnlyItsScopeAndUndoRestoresIt() {
         listOf(CoachAction.Schedule(HabitSchedule.Weekly(2)), CoachAction.Schedule(HabitSchedule.Custom(setOf(DayOfWeek.FRIDAY))),

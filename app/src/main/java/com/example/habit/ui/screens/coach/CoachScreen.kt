@@ -134,6 +134,9 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
                             Text(if (state.planning) "BEFORE YOU COMMIT" else "WHAT I'M SEEING", style = HabitTheme.type.label, color = colors.onSurfaceMuted)
                             Text(state.response.readingText(), style = HabitTheme.type.body.copy(lineHeight = 24.sp), color = colors.onSurface,
                                 modifier = Modifier.padding(top = 8.dp).testTag("coach-reading"))
+                            if (state.planning) state.response.value.reply?.let { reply ->
+                                Text(reply, style = HabitTheme.type.body, color = colors.onSurface, modifier = Modifier.padding(top = 12.dp).testTag("coach-reply"))
+                            }
                         }
                     }
                 }
@@ -157,8 +160,8 @@ internal fun CoachContent(state: CoachUiState, onBack: () -> Unit, onApply: (Int
                     CoachConfirmation(requireNotNull(state.receipt), state.now, state.busy, onUndo)
                 }
             }
-            if (state.response != null && !applied && state.failure == null && !state.loading) {
-                item("heading") { Text(if (state.planning) "Three ways to start" else "Three things to try", style = HabitTheme.type.title,
+            if (state.response != null && state.response.value.suggestions.isNotEmpty() && !applied && state.failure == null && !state.loading) {
+                item("heading") { Text(if (state.response.value.reply != null) "Suggestions" else if (state.planning) "Three ways to start" else "Three things to try", style = HabitTheme.type.title,
                     color = colors.onSurface, modifier = Modifier.padding(top = 12.dp)) }
                 itemsIndexed(state.response.value.suggestions, key = { _, s -> s.strategyId }) { index, suggestion ->
                     val strategy = state.strategies.single { it.card.id == suggestion.strategyId }.card

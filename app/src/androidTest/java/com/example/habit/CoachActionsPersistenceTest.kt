@@ -47,6 +47,22 @@ class CoachActionsPersistenceTest {
         return id
     }
     private fun json(vararg pairs: Pair<String, Any?>) = JSONObject().apply { pairs.forEach { put(it.first, it.second ?: JSONObject.NULL) } }
+    @Test fun replyOnlyExchangePersistsWithOriginalContextAndCannotApplyAnAbsentAction() = runBlocking {
+        now = day.atTime(12, 0).toInstant(ZoneOffset.UTC)
+        val id = history.create(HabitDraft("Fresh quantity", HabitSettings(HabitSchedule.Weekly(3), TrackingMode.Quantity(BigDecimal("5"), "pages"))))
+        val before = history.record(id)!!
+        val request = (CoachRequestBuilder.existing(catalog, before.toHistory(), day, "Hello", true) as RequestResult.Ready).request
+        assertTrue(request.strategies.isEmpty())
+        val raw = json("reading" to json("facts" to JSONArray(listOf("NO_SETTLED_HISTORY")), "possibleBarrier" to null),
+            "reply" to "Hello! What would you like help with?", "suggestions" to JSONArray()).toString()
+        coach.beginInteraction(id, "reply-only", request); coach.saveExchange(id, "reply-only", request, raw)
+        val cache = db.coachDao().cacheById("reply-only")!!
+        assertEquals(2, CoachJson.storedRequest(cache.request, cache.catalogSha256, catalog)!!.contractVersion)
+        assertEquals(2, db.coachDao().allMessages().size)
+        assertTrue(runCatching { coach.apply(id, "reply-only", 0, request) }.isFailure)
+        assertTrue(db.coachDao().allActions().isEmpty())
+        assertEquals(before, history.record(id))
+    }
     private fun action(value: CoachAction): JSONObject = when (value) {
         CoachAction.AdviceOnly -> json("type" to "ADVICE_ONLY")
         is CoachAction.Target -> json("type" to "TARGET", "amount" to value.amount, "unit" to value.unit)
@@ -71,7 +87,7 @@ class CoachActionsPersistenceTest {
         val fact = if (summary.missed > 0) "RECENT_MISSES" else if (summary.pending > 0) "OPEN_EXPECTATIONS" else "RECENT_COMPLETIONS"
         return json("reading" to json("facts" to JSONArray(listOf(fact)), "possibleBarrier" to null),
             "suggestions" to JSONArray(request.strategies.mapIndexed { i, s -> json("strategyId" to s.card.id, "title" to "Suggestion",
-                "advice" to "If it fits, try this", "action" to action(if (i == 0) value else CoachAction.AdviceOnly)) })).toString()
+                "advice" to "If it fits, try this", "action" to action(if (i == 0) value else CoachAction.AdviceOnly)) })).apply { if (request.contractVersion == 2) put("reply", "If it fits, try this plan.") }.toString()
     }
     private suspend fun exchange(id: Long, value: CoachAction, key: String = "exchange"): Pair<String, CoachRequest> {
         val r = request(id); coach.beginInteraction(id, key, r); coach.saveExchange(id, key, r, response(r, value)); return key to r

@@ -9,7 +9,7 @@ internal fun CoachUiState.inputStatus(): String = when {
     busy -> "Finishing your change…"
     now < retryAt -> (failure?.let { "${it.headline()}. " } ?: "") +
         "You can send again in ${((retryAt - now - 1) / 1_000) + 1}s."
-    failure == CoachFailure.InsufficientContext -> "Ask about starting, remembering or scheduling."
+    failure == CoachFailure.InsufficientContext -> "Ask your own question about this habit."
     failure != null -> "${failure.headline()}. Try again."
     else -> "Ask your own question. Mention the activity for specific advice."
 }
@@ -38,7 +38,7 @@ internal fun CoachFailure.explanation(): String = when (this) {
     CoachFailure.Offline -> "Suggestions need a connection. Try again when you're online."
     CoachFailure.Timeout -> "The request timed out. You can retry here."
     is CoachFailure.RateLimited -> "Please wait before trying again."
-    CoachFailure.InsufficientContext -> "There isn't enough context to choose three relevant strategies yet. Ask about starting, remembering or scheduling, or use Help me get started."
+    CoachFailure.InsufficientContext -> "There isn't enough history for automatic suggestions yet. You can type any habit question below, or use Help me get started."
     CoachFailure.InvalidInput -> "Use a valid schedule and quantity target, and keep your question within 1,000 characters."
     CoachFailure.CatalogMissing, CoachFailure.CatalogInvalid -> "The local strategy library could not be read. Try again."
     CoachFailure.MalformedResponse -> "The response didn't pass validation. No suggestion was applied."

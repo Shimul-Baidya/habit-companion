@@ -76,7 +76,7 @@ class CoachActionRepository(private val database: HabitDatabase, private val his
         val cache = requireNotNull(dao.cacheById(exchangeId)) { "Suggestion is no longer available" }
         require(cache.habitId == id && cache.request == CoachJson.payload(request) && cache.catalogSha256 == request.catalogSha256)
         val validated = requireNotNull((CoachJson.response(cache.response, request, catalog()) as? ResponseResult.Valid)?.response)
-        val suggestion = validated.value.suggestions[index]
+        val suggestion = requireNotNull(validated.value.suggestions.getOrNull(index)) { "No action at this index" }
         val key = "$exchangeId:$index"
         dao.actionById(key)?.let { return@transaction it.receipt() }
         val record = requireNotNull(facts.record(id)) { "Habit no longer exists" }

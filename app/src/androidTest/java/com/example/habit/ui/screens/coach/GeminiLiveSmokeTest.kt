@@ -101,9 +101,11 @@ class GeminiLiveSmokeTest {
     private fun waitForResponse(vm: CoachViewModel) {
         compose.waitUntil(35_000) { !vm.state.value.loading && (vm.state.value.response != null || vm.state.value.failure != null) }
         assertEquals("Live provider failed: ${vm.state.value.failure}", null, vm.state.value.failure)
-        assertNotNull(vm.state.value.response); assertEquals(3, vm.state.value.response!!.value.suggestions.size)
+        assertNotNull(vm.state.value.response)
+        if (submitted!!.contractVersion == 1) assertEquals(3, vm.state.value.response!!.value.suggestions.size)
+        else assertFalse(vm.state.value.response!!.value.reply.isNullOrBlank())
         assertEquals(1, calls.get())
-        assertEquals(submitted!!.strategies.map { it.card.id }.toSet(), vm.state.value.response!!.value.suggestions.map { it.strategyId }.toSet())
+        assertTrue(submitted!!.strategies.map { it.card.id }.containsAll(vm.state.value.response!!.value.suggestions.map { it.strategyId }))
     }
     private fun capture(name: String) {
         File(context.cacheDir, "chunk12-qa").apply { mkdirs() }.resolve("$name.png").outputStream().use {
@@ -198,5 +200,37 @@ class GeminiLiveSmokeTest {
         assertFalse(CoachJson.payload(submitted!!).contains(original.habit.name))
         assertEquals(1, runBlocking { database.coachDao().allMessages().count { it.role == "COACH" } })
         assertTrue(runBlocking { database.coachDao().allCaches().single().response.isNotEmpty() })
+    }
+    @Test fun liveFreeTextWithoutAnyMatchedCardSendsAndGetsAReply() {
+        val id = runBlocking { history.create(HabitDraft("Synthetic fresh habit", HabitSettings(HabitSchedule.Daily))) }
+        val vm = model(id)
+        frame { CoachScreen(vm, {}) }
+        compose.waitUntil(5000) { vm.state.value.failure == CoachFailure.InsufficientContext }
+        compose.onNodeWithTag("coach-question").performTextInput("Hello")
+        compose.onNodeWithContentDescription("Send question").assertIsEnabled().performClick()
+        compose.runOnIdle { vm.send() }
+        waitForResponse(vm)
+        assertEquals(2, submitted!!.contractVersion); assertTrue(submitted!!.strategies.isEmpty())
+        assertTrue(vm.state.value.response!!.value.suggestions.isEmpty()); assertFalse(vm.state.value.canApply)
+        compose.waitUntil(5000) { vm.state.value.messages.any { !it.user && it.text == vm.state.value.response!!.value.reply } }
+        val restored = model(id)
+        compose.waitUntil(5000) { restored.state.value.response != null }
+        assertEquals(vm.state.value.response!!.value.reply, restored.state.value.response!!.value.reply)
+        assertEquals(1, calls.get()); assertNull(vm.state.value.receipt)
+        capture("live-free-text-no-cards")
+    }
+    @Test fun liveNaturalConsistencyQuestionSendsAndGetsADirectHabitPlan() {
+        val id = runBlocking { history.create(HabitDraft("Synthetic reading habit", HabitSettings(HabitSchedule.Daily))) }
+        val vm = model(id)
+        frame(dark = true, small = true) { CoachScreen(vm, {}) }
+        compose.waitUntil(5000) { vm.state.value.failure == CoachFailure.InsufficientContext }
+        val question = "Could you strategize my reading routine so I don't miss it or struggle with consistency?"
+        compose.onNodeWithTag("coach-question").performTextInput(question)
+        compose.onNodeWithTag("coach-question").performImeAction()
+        waitForResponse(vm)
+        assertEquals(question, submitted!!.question)
+        compose.waitUntil(5000) { vm.state.value.messages.any { !it.user && it.text == vm.state.value.response!!.value.reply } }
+        assertNull(vm.state.value.receipt); assertTrue(runBlocking { history.record(id)!!.completions }.isEmpty())
+        capture("live-natural-consistency-dark-small")
     }
 }

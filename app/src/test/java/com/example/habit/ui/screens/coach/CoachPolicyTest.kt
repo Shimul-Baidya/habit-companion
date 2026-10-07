@@ -14,7 +14,7 @@ class CoachPolicyTest {
         assertEquals(ready.inputStatus(), ready.copy(retryAt = 10_000).inputStatus())
         assertEquals("Retry loading Coach data before sending.", ready.copy(localError = true).inputStatus())
         assertEquals("Enable Coach in Profile to send a question.", ready.copy(enabled = false).inputStatus())
-        assertEquals("Ask about starting, remembering or scheduling.", ready.copy(failure = CoachFailure.InsufficientContext).inputStatus())
+        assertEquals("Ask your own question about this habit.", ready.copy(failure = CoachFailure.InsufficientContext).inputStatus())
         assertEquals("The Coach needs a moment. You can send again in 3s.",
             ready.copy(failure = CoachFailure.RateLimited(3), retryAt = 13_000).inputStatus())
         assertEquals("The Coach is unavailable. Try again.", ready.copy(failure = CoachFailure.ServerError).inputStatus())

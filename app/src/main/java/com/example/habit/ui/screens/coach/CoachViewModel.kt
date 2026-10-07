@@ -24,7 +24,7 @@ data class CoachUiState(
     val receipt: CoachApplyReceipt? = null, val now: Long = 0, val retryAt: Long = 0,
 ) {
     val canRequest get() = ready && enabled && !missing && !localError && !loading && !busy && now >= retryAt
-    val canApply get() = ready && enabled && !missing && !localError && !loading && !busy && response != null && failure == null
+    val canApply get() = ready && enabled && !missing && !localError && !loading && !busy && response?.value?.suggestions?.isNotEmpty() == true && failure == null
 }
 
 /** One intended entry/request; saved primitives prevent dispatch on recreation or tab re-entry. */
@@ -143,7 +143,7 @@ class CoachViewModel(
                                     details = it.value.suggestions.joinToString("\n\n") { s ->
                                         val card = requireNotNull(c.byId[s.strategyId])
                                         "${s.title}: ${s.advice}\n${card.title}\nSupplied attribution: ${card.source}"
-                                    }
+                                    }.takeIf { text -> text.isNotBlank() }
                                     it.conversationText(requireNotNull(original).question)
                                 } ?: "Saved Coach response is unavailable."
                             } else message.text

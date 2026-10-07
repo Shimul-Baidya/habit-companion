@@ -41,7 +41,7 @@ class GeminiTransportTest {
             JSONObject().put("strategyId", it.card.id).put("title", "Prepare a small step")
                 .put("advice", "If starting feels difficult, prepare one small step.")
                 .put("action", JSONObject().put("type", "PLAN").put("note", "Prepare one small step"))
-        })).toString()
+        })).apply { if (request.contractVersion == 2) put("reply", "If starting feels difficult, prepare one small step.") }.toString()
     private fun envelope(text: String, finish: String = "STOP") = JSONObject().put("candidates", JSONArray(listOf(
         JSONObject().put("finishReason", finish).put("content", JSONObject().put("parts", JSONArray(listOf(JSONObject().put("text", text)))))))).toString()
     private fun keys(json: JSONObject) = json.keys().asSequence().toSet()

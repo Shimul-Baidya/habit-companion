@@ -55,9 +55,33 @@ class CoachQuestionTest {
         assertTrue(focus.strategies.all { it.card.tags.any { tag -> tag in setOf("focus", "distraction-control") } })
         assertNotEquals(remembering.strategies.map { it.card.id }, focus.strategies.map { it.card.id })
     }
-    @Test fun irrelevantQuestionStillDoesNotPadAFreshHistory() {
-        for (q in listOf("", "help", "karate", "astronomy telescope")) {
-            assertEquals(RequestResult.Unavailable(CoachFailure.InsufficientContext), CoachRequestBuilder.existing(catalog, history(), day, q, true))
+    @Test fun typedMessagesNeverNeedThreeKeywordMatchesAndDoNotPadCards() {
+        assertEquals(RequestResult.Unavailable(CoachFailure.InsufficientContext), CoachRequestBuilder.existing(catalog, history(), day, enabled = true))
+        for (q in listOf("help", "karate", "astronomy telescope", "Hello", "I keep failing at this", "এটা করতে কষ্ট হয়")) {
+            val r = request(history(), q)
+            assertEquals(2, r.contractVersion)
+            assertEquals(q, r.question)
+            assertTrue(r.strategies.size <= 3)
+        }
+        assertTrue(request(history(), "Hello").strategies.isEmpty())
+        assertTrue(request(history(), "astronomy telescope").strategies.isEmpty())
+    }
+    @Test fun consistencyAndMissedDaysUseRelevantCardsWithoutInventingMeasuredMisses() {
+        for (q in listOf("How can I stay consistent?", "Can you strategize this so I don't miss it?", "I struggle to keep doing this regularly")) {
+            val r = request(history(), q)
+            assertTrue(r.strategies.isNotEmpty())
+            assertTrue(r.strategies.all { it.applicability == Applicability.QUESTION_OPTION })
+            assertEquals(0, (r.context as CoachContext.Existing).summary.missed)
+        }
+    }
+    @Test fun conversationReplyWorksWithNoCardsAndCannotSmuggleAnyApplyAction() {
+        val r = request(history(), "Hello")
+        val response = CoachResponse(CoachReading(listOf(ReadingFact.NO_SETTLED_HISTORY), null), emptyList(), "Hello! What feels difficult about this habit?")
+        val valid = CoachResponseValidator.validate(response, r, catalog) as ResponseResult.Valid
+        assertEquals(response.reply, valid.response.conversationText(r.question))
+        for (bad in listOf(response.copy(reply = ""), response.copy(reply = "x".repeat(CoachLimits.REPLY + 1)),
+            response.copy(suggestions = listOf(CoachSuggestion("card_11", "Change target", "Change it", CoachAction.Target("1", "pages")))))) {
+            assertEquals(ResponseResult.Invalid, CoachResponseValidator.validate(bad, r, catalog))
         }
     }
     @Test fun noSettledFactSupportsRestDayWithoutClaimingMissesOrPendingDays() {
@@ -65,7 +89,7 @@ class CoachQuestionTest {
         assertEquals(setOf(ReadingFact.NO_SETTLED_HISTORY), CoachResponseValidator.allowedFacts(r.context))
         val response = CoachResponse(CoachReading(listOf(ReadingFact.NO_SETTLED_HISTORY), null), r.strategies.map {
             CoachSuggestion(it.card.id, "A starting step", "Choose an easy first step if starting is difficult.", CoachAction.AdviceOnly)
-        })
+        }, "Choose an easy first step if starting is difficult.")
         assertTrue(CoachResponseValidator.validate(response, r, catalog) is ResponseResult.Valid)
         assertEquals(ResponseResult.Invalid, CoachResponseValidator.validate(response.copy(reading = CoachReading(listOf(ReadingFact.RECENT_MISSES), null)), r, catalog))
         assertFalse(ReadingFact.NO_SETTLED_HISTORY in CoachResponseValidator.allowedFacts(request(history(days = 3), "starting").context))
@@ -74,7 +98,7 @@ class CoachQuestionTest {
         val r = request(history(days = 8), "I forget my karate kit")
         val suggestions = r.strategies.mapIndexed { index, it -> CoachSuggestion(it.card.id, "Packing option ${index + 1}",
             "If packing slips your mind, leave your kit beside the door before class.", CoachAction.AdviceOnly) }
-        val validated = (CoachResponseValidator.validate(CoachResponse(CoachReading(listOf(ReadingFact.RECENT_MISSES), null), suggestions), r, catalog) as ResponseResult.Valid).response
+        val validated = (CoachResponseValidator.validate(CoachResponse(CoachReading(listOf(ReadingFact.RECENT_MISSES), null), suggestions, "If packing slips your mind, leave your kit beside the door before class."), r, catalog) as ResponseResult.Valid).response
         val bubble = validated.conversationText(r.question)
         assertTrue(bubble.contains("kit beside the door"))
         assertFalse(bubble.contains("required occurrences missed"))

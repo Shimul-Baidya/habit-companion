@@ -71,6 +71,7 @@ class CoachWorkflowUiTest {
     private val requests = mutableListOf<CoachRequest>()
     private var failure: CoachFailure? = null
     private var invalid = false
+    private var replyOnly = false
     private var suspended = false
     private var cancelled = false
     private var connected = true
@@ -110,10 +111,10 @@ class CoachWorkflowUiTest {
             else -> "If it fits, prepare a small step before starting."
         }
         return json("reading" to json("facts" to JSONArray(listOf(fact)), "possibleBarrier" to "UNCLEAR_CUE"),
-            "suggestions" to JSONArray(request.strategies.mapIndexed { index, strategy ->
+            "suggestions" to JSONArray(if (replyOnly && request.contractVersion == 2) emptyList<JSONObject>() else request.strategies.mapIndexed { index, strategy ->
                 json("strategyId" to strategy.card.id, "title" to "Try a clear plan ${index + 1}", "advice" to advice,
                     "action" to json("type" to "PLAN", "note" to "Applied plan ${index + 1}"))
-            })).toString()
+            })).apply { if (request.contractVersion == 2) put("reply", advice) }.toString()
     }
     private fun habit(name: String = "Read 20 pages", schedule: HabitSchedule = HabitSchedule.Daily, mode: TrackingMode = TrackingMode.Binary): Long = runBlocking {
         val old = HabitHistoryRepository(db, Clock.fixed(day.minusDays(10).atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
@@ -307,7 +308,7 @@ class CoachWorkflowUiTest {
         val id = runBlocking { history.create(HabitDraft("Read", HabitSettings(HabitSchedule.Daily, TrackingMode.Binary))) }
         val vm = model(id); screen(vm, dark = true, small = true)
         assertEquals(0, calls.get())
-        compose.onNodeWithTag("coach-input-status").assertTextEquals("Ask about starting, remembering or scheduling.")
+        compose.onNodeWithTag("coach-input-status").assertTextEquals("Ask your own question about this habit.")
         compose.onNodeWithContentDescription("Send question").assertIsNotEnabled()
         compose.onNodeWithTag("coach-question").performClick()
         compose.onNodeWithTag("coach-question").performTextInput("My phone distracts me while reading. How can I concentrate?")
@@ -320,6 +321,46 @@ class CoachWorkflowUiTest {
         assertEquals(0, runBlocking { history.record(id)!!.completions.size })
         assertNull(vm.state.value.receipt)
         capture("custom-question-dark-small")
+    }
+    @Test fun naturalMessagesAndConsistencyRequestsSendWithoutKeywordGateAndRestoreReplyOnlyCache() {
+        val id = runBlocking { history.create(HabitDraft("Fresh reading", HabitSettings(HabitSchedule.Daily))) }
+        val vm = model(id); screen(vm)
+        val messages = listOf("Hello", "Can you help me keep at it?", "I don't know what to do", "কীভাবে এগোব?",
+            "Please strategize this so I don't miss it or struggle with consistency")
+        messages.forEachIndexed { index, text ->
+            compose.onNodeWithTag("coach-question").performTextInput(text)
+            compose.onNodeWithContentDescription("Send question").assertIsEnabled().performClick()
+            compose.runOnIdle { vm.send() }
+            compose.waitUntil(5000) { calls.get() == index + 1 && !vm.state.value.loading && vm.state.value.question.isEmpty() }
+            assertNull(vm.state.value.failure); assertEquals(text, requests.last().question)
+            assertEquals(2, requests.last().contractVersion)
+            if (index == 0) {
+                assertTrue(requests.last().strategies.isEmpty()); assertFalse(vm.state.value.canApply)
+                compose.onNodeWithTag("coach-card-0").assertDoesNotExist()
+                val restored = model(id); ready(restored)
+                assertEquals(vm.state.value.response!!.value.reply, restored.state.value.response!!.value.reply)
+                assertEquals(1, calls.get())
+                capture("free-text-reply-light-reference")
+            }
+        }
+        assertNull(vm.state.value.receipt); assertTrue(runBlocking { history.record(id)!!.completions }.isEmpty())
+        compose.waitUntil(5000) { vm.state.value.messages.count { it.user } == messages.size }
+        capture("natural-consistency-reply-light-reference")
+    }
+    @Test fun planningCanShowAConversationOnlyReplyWithoutApplyingOrCreatingAHabit() {
+        lateinit var form: NewHabitViewModel
+        compose.runOnIdle { form = NewHabitViewModel(history, SavedStateHandle(), enabled, clock).also { store.put("reply-form", it) } }
+        compose.waitUntil(5000) { !form.state.value.loading && form.state.value.coachEnabled }
+        val before = form.state.value.draft
+        val vm = model(null, form = form); screen(vm, dark = true, small = true)
+        replyOnly = true
+        compose.onNodeWithTag("coach-question").performTextInput("I'm unsure what to do")
+        compose.onNodeWithContentDescription("Send question").performClick()
+        compose.waitUntil(5000) { calls.get() == 2 && !vm.state.value.loading && vm.state.value.response?.value?.reply != null }
+        scroll("coach-reply"); compose.onNodeWithTag("coach-reply").assertIsDisplayed()
+        assertTrue(vm.state.value.response!!.value.suggestions.isEmpty()); assertFalse(vm.state.value.canApply)
+        assertEquals(before, form.state.value.draft); assertTrue(runBlocking { history.records.first() }.isEmpty())
+        capture("planning-reply-dark-small")
     }
     @Test fun inputShowsCooldownRetainsCustomQuestionAndAllowsSendingWhenItExpires() {
         val vm = model(habit()); screen(vm)

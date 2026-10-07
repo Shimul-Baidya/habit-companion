@@ -99,7 +99,7 @@ object CoachJson {
                 "partialQuantityDays" to s.partialQuantityDays,
                 "recentSettledOutcomes" to JSONArray(s.recentSettled.map { it.name }), "attention" to s.attention.name) }
         }
-        return json("contractVersion" to 1, "mode" to if (request.context is CoachContext.Planning) "PLANNING" else "EXISTING",
+        return json("contractVersion" to request.contractVersion, "mode" to if (request.context is CoachContext.Planning) "PLANNING" else "EXISTING",
             "context" to context, "question" to request.question,
             "strategies" to JSONArray(request.strategies.map { admitted -> admitted.card.let { c ->
                 json("id" to c.id, "title" to c.title, "principle" to c.principle, "action" to c.action,
@@ -112,7 +112,7 @@ object CoachJson {
     fun storedRequest(text: String, digest: String, catalog: StrategyCatalog): CoachRequest? = runCatching {
         require(digest == catalog.sha256)
         val root = parse(text, 65_536).obj("contractVersion", "mode", "context", "question", "strategies")
-        require(root["contractVersion"].integer() == 1)
+        val version = root["contractVersion"].integer(); require(version in 1..2)
         fun tracking(value: Any?): TrackingMode {
             require(value is Map<*, *>)
             return when (value["mode"].text()) {
@@ -150,21 +150,28 @@ object CoachJson {
             require(catalog.byId[card.id] == card)
             AdmittedStrategy(card, c["applicability"].enum<Applicability>())
         }
-        require(cards.size == 3 && cards.map { it.card.id }.distinct().size == 3)
+        require(cards.size <= 3 && cards.map { it.card.id }.distinct().size == cards.size)
         val question = CoachLimits.text(root["question"].text(), CoachLimits.QUESTION, true)
-        require((StrategyRetriever.retrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards ||
-            (StrategyRetriever.legacyRetrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
-        CoachRequest(context, question, cards, digest)
+        if (version == 1) {
+            require(cards.size == 3)
+            require((StrategyRetriever.previousRetrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards ||
+                (StrategyRetriever.legacyRetrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
+        } else {
+            require(question.isNotBlank())
+            require((StrategyRetriever.retrieve(catalog, context, question) as? RetrievalResult.Ready)?.strategies == cards)
+        }
+        CoachRequest(context, question, cards, digest, version)
     }.getOrNull()
 
     fun response(text: String, request: CoachRequest, catalog: StrategyCatalog): ResponseResult = try {
-        val root = parse(text, CoachLimits.RESPONSE_BYTES).obj("reading", "suggestions")
+        val root = if (request.contractVersion == 2) parse(text, CoachLimits.RESPONSE_BYTES).obj("reading", "suggestions", "reply")
+            else parse(text, CoachLimits.RESPONSE_BYTES).obj("reading", "suggestions")
         val reading = root["reading"].obj("facts", "possibleBarrier")
         val value = CoachResponse(CoachReading(reading["facts"].list().map { it.enum<ReadingFact>() },
             reading["possibleBarrier"]?.enum<PossibleBarrier>()), root["suggestions"].list().map {
             val s = it.obj("strategyId", "title", "advice", "action")
             CoachSuggestion(s["strategyId"].text(), s["title"].text(), s["advice"].text(), action(s["action"]))
-        })
+        }, if (request.contractVersion == 2) root["reply"].text() else null)
         CoachResponseValidator.validate(value, request, catalog)
     } catch (_: Exception) { ResponseResult.Invalid }
 

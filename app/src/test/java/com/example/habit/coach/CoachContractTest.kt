@@ -35,7 +35,7 @@ class CoachContractTest {
     private fun response(request: CoachRequest, fact: ReadingFact = ReadingFact.PLANNING_DRAFT) =
         CoachResponse(CoachReading(listOf(fact), PossibleBarrier.STARTING_SIZE), request.strategies.map {
             CoachSuggestion(it.card.id, "Try a small step", "If this fits, try a small starting step.", CoachAction.Plan("Start small"))
-        })
+        }, if (request.contractVersion == 2) "If this fits, try a small starting step." else null)
     private fun validation(request: CoachRequest, action: CoachAction, id: String? = null): ResponseResult {
         val r = response(request, if (request.context is CoachContext.Planning) ReadingFact.PLANNING_DRAFT else ReadingFact.RECENT_MISSES)
         val index = id?.let { name -> r.suggestions.indexOfFirst { it.strategyId == name } } ?: 0
@@ -57,13 +57,14 @@ class CoachContractTest {
         assertEquals(3, request.strategies.size)
         assertFalse(request.strategies.any { it.card.id == "card_email" })
     }
-    @Test fun missingHistoryAndWeakOrUnrelatedQuestionDoNotPadCards() {
-        listOf("", "help", "astronomy telescope").forEach { question ->
-            assertEquals(RequestResult.Unavailable(CoachFailure.InsufficientContext),
-                CoachRequestBuilder.existing(catalog, history(days = 0), today, question, true))
-        }
+    @Test fun initialSuggestionsNeedContextButTypedMessagesDoNotNeedThreeCards() {
         assertEquals(RequestResult.Unavailable(CoachFailure.InsufficientContext),
-            CoachRequestBuilder.existing(catalog, history(days = 0), today, "email", true))
+            CoachRequestBuilder.existing(catalog, history(days = 0), today, enabled = true))
+        for (question in listOf("help", "astronomy telescope", "email")) {
+            val result = CoachRequestBuilder.existing(catalog, history(days = 0), today, question, true) as RequestResult.Ready
+            assertEquals(2, result.request.contractVersion)
+            assertTrue(result.request.strategies.size < 3)
+        }
     }
     @Test fun questionAndPlanningMatchesRemainConditional() {
         val request = planning(question = "I do not struggle with starting routines")

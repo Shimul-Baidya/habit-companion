@@ -8,6 +8,7 @@ import java.time.LocalDate
 object CoachLimits {
     const val QUESTION = 1000
     const val TEXT = 240
+    const val REPLY = 1500
     const val RESPONSE_BYTES = 32_768
     fun text(value: String, max: Int, allowBlank: Boolean = false): String {
         val trimmed = value.trim()
@@ -66,7 +67,7 @@ data class AdmittedStrategy(val card: StrategyCard, val applicability: Applicabi
 
 /** Constructed only after enabled/context/retrieval validation. Local route/draft tokens stay outside. */
 class CoachRequest internal constructor(val context: CoachContext, val question: String,
-    val strategies: List<AdmittedStrategy>, val catalogSha256: String)
+    val strategies: List<AdmittedStrategy>, val catalogSha256: String, val contractVersion: Int = 1)
 
 sealed interface RequestResult {
     data class Ready(val request: CoachRequest) : RequestResult
@@ -103,7 +104,8 @@ object CoachRequestBuilder {
             val value = context()
             when (val found = StrategyRetriever.retrieve(catalog, value, bounded)) {
                 is RetrievalResult.Insufficient -> RequestResult.Unavailable(CoachFailure.InsufficientContext)
-                is RetrievalResult.Ready -> RequestResult.Ready(CoachRequest(value, bounded, found.strategies, catalog.sha256))
+                is RetrievalResult.Ready -> RequestResult.Ready(CoachRequest(value, bounded, found.strategies, catalog.sha256,
+                    contractVersion = if (bounded.isBlank()) 1 else 2))
             }
         } catch (_: IllegalArgumentException) { RequestResult.Unavailable(CoachFailure.InvalidInput) }
     }
@@ -135,7 +137,7 @@ enum class PossibleBarrier(val conditionalText: String) {
 }
 data class CoachReading(val facts: List<ReadingFact>, val possibleBarrier: PossibleBarrier?)
 data class CoachSuggestion(val strategyId: String, val title: String, val advice: String, val action: CoachAction)
-data class CoachResponse(val reading: CoachReading, val suggestions: List<CoachSuggestion>)
+data class CoachResponse(val reading: CoachReading, val suggestions: List<CoachSuggestion>, val reply: String? = null)
 
 class ValidatedCoachResponse internal constructor(val value: CoachResponse, private val context: CoachContext) {
     fun readingText(): String = buildList {
@@ -156,7 +158,7 @@ class ValidatedCoachResponse internal constructor(val value: CoachResponse, priv
 
     /** A follow-up must show the generated advice, rather than repeating fixed measured copy. */
     fun conversationText(question: String): String = if (question.isBlank()) readingText()
-        else value.suggestions.joinToString("\n\n") { "${it.title}: ${it.advice}" }
+        else value.reply ?: value.suggestions.joinToString("\n\n") { "${it.title}: ${it.advice}" }
 }
 sealed interface ResponseResult {
     data class Valid(val response: ValidatedCoachResponse) : ResponseResult
@@ -166,8 +168,17 @@ sealed interface ResponseResult {
 object CoachResponseValidator {
     fun validate(response: CoachResponse, request: CoachRequest, catalog: StrategyCatalog): ResponseResult = try {
         require(request.catalogSha256 == catalog.sha256)
-        require(response.suggestions.size == 3 && response.suggestions.map { it.strategyId }.distinct().size == 3)
-        require(request.strategies.size == 3 && request.strategies.all { catalog.byId[it.card.id] == it.card })
+        require(request.contractVersion in 1..2)
+        if (request.contractVersion == 1) {
+            require(response.reply == null && response.suggestions.size == 3 && request.strategies.size == 3)
+        } else {
+            require(request.question.isNotBlank())
+            CoachLimits.text(requireNotNull(response.reply), CoachLimits.REPLY)
+            require(request.strategies.size <= 3 && response.suggestions.size <= request.strategies.size)
+        }
+        require(response.suggestions.map { it.strategyId }.distinct().size == response.suggestions.size)
+        require(request.strategies.map { it.card.id }.distinct().size == request.strategies.size)
+        require(request.strategies.all { catalog.byId[it.card.id] == it.card })
         require(response.reading.facts.size in 1..2 && response.reading.facts.distinct().size == response.reading.facts.size)
         val allowed = allowedFacts(request.context)
         require(response.reading.facts.all { it in allowed })

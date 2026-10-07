@@ -450,3 +450,12 @@ Update the overview's status at the same time. Do not mark a chunk complete whil
 - Preview/dimensions/XML/diff checks passed. Assembly/**165 JVM tests**/lint/install passed in 28s; zero test failures/errors/skips, lint zero errors/17 existing advisories. Updated app installed on Pixel 7; launch passed. Main database/preferences hashes match the prior record; WAL differs, so no full byte-identical storage claim. Legacy/themed visuals on other OS versions are not claimed; no new runtime suite or Gemini request.
 - Next: owner icon review, with small requested adjustments only. Coach problem remains unresolved and investigation is stopped at the owner's request.
 - Suggested one-line commit: `feat: add a minimal Habit Companion app icon and favicon`
+
+
+### Natural Coach questions — complete, 7 October 2026
+
+- Owner reopened Coach investigation and identified the three-card keyword gate. Typed messages now use v2 conversation replies with zero-to-three genuine matches; blank initial suggestions remain v1/three cards. Natural consistency/recovery/friction/motivation/planning vocabulary is supported; weak or multilingual wording can still dispatch for clarification. Old v1 caches and Apply/Undo identities remain readable; no schema, personal-payload expansion, fabricated cards or new action type.
+- Assembly/**168 JVM / 81 focused Pixel Android 17 cases**/lint passed, zero failures/errors/skips; lint zero errors/17 existing advisories. Two synthetic real UI-to-Gemini sends passed: `Hello` with no cards and a naturally phrased reading consistency plan. Reviewed actual generated replies/screenshots, saved replies/no redispatch and no implicit Apply. Final latest-source assembly/JVM/lint passed. Two earlier fixture/initial-reading assertions were repaired before passing; no hidden failed provider call or automatic retry.
+- Installed APK matches build; cold launch/process verified. Owner database/WAL/preferences hashes unchanged from this pass's baseline. No owner-history transmission, clear/uninstall, schema/credential/dependency change or Git mutation. Exact commands/evidence and limits are in HANDOFF.md.
+- Next: owner retest the original question on the updated phone; further changes need a new request. No automatic additional chunk.
+- Suggested one-line commit: `fix: let Coach accept natural habit questions without a keyword gate`

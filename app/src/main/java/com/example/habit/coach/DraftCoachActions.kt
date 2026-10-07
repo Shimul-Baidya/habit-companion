@@ -31,7 +31,9 @@ class DraftCoachActions(private val saved: SavedStateHandle, private val token: 
             TrackingMode.Binary -> listOf("BINARY")
             is TrackingMode.Quantity -> listOf("QUANTITY", t.target.toPlainString(), t.unit)
         }
-        return ArrayList(listOf(request.catalogSha256, request.question, c.name, c.activeHabitCount.toString()) + schedule + mode + request.strategies.map { it.card.id })
+        return ArrayList(listOf(request.catalogSha256, request.question, c.name, c.activeHabitCount.toString()) + schedule + mode + request.strategies.map { it.card.id }).apply {
+            if (request.contractVersion == 2) add("contractVersion:2")
+        }
     }
     fun beginInteraction(draftToken: String, exchangeId: String, request: CoachRequest) {
         require(draftToken == token && exchangeId.matches(Regex("[A-Za-z0-9_-]{1,80}")) && request.context is CoachContext.Planning)
@@ -57,7 +59,7 @@ class DraftCoachActions(private val saved: SavedStateHandle, private val token: 
         val before = read()
         val context = request.context
         val settings = before.copy(name = "Draft").toHabitDraft().settings
-        val action = response.value.suggestions[index].action
+        val action = requireNotNull(response.value.suggestions.getOrNull(index)) { "No action at this index" }.action
         val after = when (action) {
             CoachAction.AdviceOnly -> before
             is CoachAction.Target -> {
