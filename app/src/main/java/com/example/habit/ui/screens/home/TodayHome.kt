@@ -102,8 +102,9 @@ fun TodayHome(
 /** 4 and 5 — the 64dp today ring beside the all-time best streak (including archived history). */
 @Composable
 private fun TodaySummary(state: HomeUiState) {
-    val ringDescription = stringResource(
-        R.string.home_today_ring,
+    val ringDescription = pluralStringResource(
+        R.plurals.home_today_ring,
+        state.totalToday,
         state.doneToday,
         state.totalToday,
     )

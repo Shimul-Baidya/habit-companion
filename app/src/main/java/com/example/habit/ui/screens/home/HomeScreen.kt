@@ -95,6 +95,7 @@ internal fun HomeContent(
     val errorMessage = stringResource(R.string.home_db_error)
     val retryLabel = stringResource(R.string.home_retry)
     val tabDisabled = stringResource(R.string.empty_tab_disabled)
+    val coachNeedsActiveHabit = stringResource(R.string.coach_tab_requires_active)
 
     LaunchedEffect(state.readError) {
         if (state.readError && state.allHabits.isNotEmpty()) {
@@ -111,11 +112,13 @@ internal fun HomeContent(
         }
     }
 
-    // 7 — on the empty Home, Progress and Coach are visible but inert.
-    val enabledTabs = if (state.isEmpty || state.snapshot == null) {
-        setOf(HomeTab.HOME, HomeTab.PROFILE)
-    } else {
-        HomeTab.entries.toSet()
+    // A never-used collection has no Progress; archived history still has real statistics.
+    val enabledTabs = buildSet {
+        add(HomeTab.HOME); add(HomeTab.PROFILE)
+        if (state.snapshot != null) {
+            if (state.hasHistory) add(HomeTab.PROGRESS)
+            if (state.allHabits.isNotEmpty()) add(HomeTab.COACH)
+        }
     }
 
     Scaffold(
@@ -136,7 +139,7 @@ internal fun HomeContent(
                 BottomNav(selected = HomeTab.HOME, enabled = enabledTabs,
                     onSelect = { tab ->
                         if (tab in enabledTabs) onSelectTab(tab)
-                        else scope.launch { snackbarHostState.showSnackbar(tabDisabled) }
+                        else scope.launch { snackbarHostState.showSnackbar(if (state.hasHistory && tab == HomeTab.COACH) coachNeedsActiveHabit else tabDisabled) }
                     })
             }
         },
@@ -169,6 +172,7 @@ internal fun HomeContent(
                     onAddHabit = onAddHabit,
                     onOpenCoach = onOpenCoach,
                     coachEnabled = state.coachEnabled,
+                    hasHistory = state.hasHistory,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),

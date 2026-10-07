@@ -166,15 +166,18 @@ class HabitFormUiTest {
         compose.onNodeWithContentDescription("Completions per week").performScrollTo().assertTextContains("2")
         compose.runOnIdle { assertEquals(0, forms.writes) }
     }
-    @Test fun referenceLightFormUsesOriginalComposition() {
+    @Test fun referenceLightFormUsesOriginalComposition() { referenceForm(false) }
+    @Test fun referenceDarkFormUsesOriginalComposition() { referenceForm(true) }
+    private fun referenceForm(dark: Boolean) {
+        val name = if (dark) "chunk13-form-dark-reference" else "chunk04-form-light"
         compose.setContent { DeviceConfigurationOverride(DeviceConfigurationOverride.ForcedSize(DpSize(393.dp, 832.dp))) {
-            HabitTheme(darkTheme = false) { HabitFormContent(HabitFormUiState(HabitFormDraft(name = "Read 20 pages", iconKey = "book", colorKey = "purple"), false, loading = false, coachEnabled = true),
+            HabitTheme(darkTheme = dark) { HabitFormContent(HabitFormUiState(HabitFormDraft(name = "Read 20 pages", iconKey = "book", colorKey = "purple"), false, loading = false, coachEnabled = true),
                 onBack = {}, onChange = {}, onDay = {}, onSave = {}, onCoach = {}, onRetry = {}, onReload = {}) }
         } }
         compose.onNodeWithText("Create habit").assertIsDisplayed()
-        screenshot("chunk04-form-light.png")
+        screenshot("$name.png")
         compose.onNodeWithText("Not sure how to make this stick?").performScrollTo()
-        screenshot("chunk04-form-light-scrolled.png")
+        screenshot("$name-scrolled.png")
     }
     @Test fun darkSmallLargeTextQuantityFormKeepsDockedSaveAccessibleWithKeyboard() {
         compose.runOnIdle { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }

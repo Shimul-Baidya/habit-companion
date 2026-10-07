@@ -37,7 +37,8 @@ enum class HomeTab(val labelRes: Int, val icon: ImageVector) {
  * not. Tab switching is a fade, never a slide (SCR-04 element 13).
  *
  * SCR-03 passes a reduced [enabled] set: Progress and Coach are visible but inert until
- * a habit exists, and tapping one explains why rather than doing nothing.
+ * an active habit exists, and tapping one explains why rather than doing nothing.
+ * Progress remains available when archived records preserve a historical collection.
  */
 @Composable
 fun BottomNav(

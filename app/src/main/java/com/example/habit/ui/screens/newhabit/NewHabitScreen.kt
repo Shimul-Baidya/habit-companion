@@ -239,7 +239,7 @@ internal fun HabitFormContent(
             }
             if (state.coachEnabled) {
                 Spacer(Modifier.height(Spacing.xxl))
-                CoachPlanningCard(enabled && !state.loading && state.loadError == null, onCoach)
+                CoachPlanningCard(enabled && !state.loading && state.loadError == null, state.editing, onCoach)
             }
         }
     }
@@ -319,7 +319,7 @@ private fun WeekdayPicker(draft: HabitFormDraft, enabled: Boolean, onDay: (DayOf
 }
 
 @Composable
-private fun CoachPlanningCard(enabled: Boolean, onClick: () -> Unit) {
+private fun CoachPlanningCard(enabled: Boolean, editing: Boolean, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         modifier = Modifier.fillMaxWidth().heightIn(min = 116.dp).background(HabitTheme.colors.primaryContainer, Radius.card)
             .border(Elevation.cardOutline, HabitTheme.colors.primary.copy(alpha = 0.18f), Radius.card)
@@ -329,7 +329,7 @@ private fun CoachPlanningCard(enabled: Boolean, onClick: () -> Unit) {
         }
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.form_coach_title), style = HabitTheme.type.body, fontWeight = FontWeight.Bold, color = HabitTheme.colors.onPrimaryContainer)
-            Text(stringResource(R.string.form_coach_body), style = HabitTheme.type.caption, color = HabitTheme.colors.onPrimaryContainer)
+            Text(stringResource(if (editing) R.string.form_existing_coach_body else R.string.form_coach_body), style = HabitTheme.type.caption, color = HabitTheme.colors.onPrimaryContainer)
         }
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = HabitTheme.colors.onPrimaryContainer, modifier = Modifier.size(20.dp))
     }

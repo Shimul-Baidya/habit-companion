@@ -46,6 +46,7 @@ data class HomeUiState(
     val writingIds: Set<Long> = emptySet(),
 ) {
     val allHabits: List<HabitStatus> get() = healthy + atRisk
+    val hasHistory: Boolean get() = snapshot?.records?.isNotEmpty() == true
     val isEmpty: Boolean get() = !loading && !readError && allHabits.isEmpty()
     val scheduledToday: List<HabitStatus> get() = allHabits.filter { it.scheduledToday }
     val doneToday: Int get() = scheduledToday.count { it.doneToday }

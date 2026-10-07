@@ -32,6 +32,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
+import org.junit.rules.TestName
 import java.io.File
 import java.math.BigDecimal
 import java.time.*
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @OptIn(ExperimentalTestApi::class)
 class GeminiLiveSmokeTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule val testName = TestName()
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val day = LocalDate.of(2026, 10, 7)
     private val clock = Clock.fixed(day.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
@@ -68,7 +70,13 @@ class GeminiLiveSmokeTest {
                 // These are synthetic test inputs; the credential is a header, never in this capture.
                 File(context.cacheDir, "chunk12-qa").apply { mkdirs() }.resolve("live-$mode-request.json").writeText(body)
                 AndroidGeminiTransport().post(url, key, body)
-            }).request(request)
+            }).request(request).also { result ->
+                // Synthetic smoke output only, retained locally for actual advice-quality review.
+                if (result is CoachServiceResult.RawResponse) {
+                    File(context.cacheDir, "chunk13-qa").apply { mkdirs() }
+                        .resolve("${testName.methodName}-response.json").writeText(result.json)
+                }
+            }
         }
     }
     @Before fun setup() {

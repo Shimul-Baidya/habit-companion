@@ -325,13 +325,17 @@ class CoachWorkflowUiTest {
         assertTrue(vm.state.value.messages.any { it.user })
         assertEquals(1, requests.count { it.question.isNotBlank() })
     }
-    @Test fun appliedAndOfflineVariantsRetainContextAndReferenceVisuals() {
-        val vm = model(habit()); screen(vm)
+    @Test fun appliedAndOfflineVariantsRetainContextAndReferenceVisuals() { referenceVisuals(false) }
+    @Test fun darkReferenceSuggestionsAppliedAndOfflineRetainOriginalComposition() { referenceVisuals(true) }
+    private fun referenceVisuals(dark: Boolean) {
+        val mode = if (dark) "dark" else "light"
+        val vm = model(habit()); screen(vm, dark = dark)
+        capture("suggestions-$mode-reference")
         compose.runOnIdle { vm.apply(0) }; compose.waitUntil(5000) { vm.state.value.receipt != null }
-        scroll("coach-confirmation"); capture("applied-light-reference")
+        scroll("coach-confirmation"); capture("applied-$mode-reference")
         failure = CoachFailure.Offline; compose.runOnIdle { vm.question("Can I simplify this?"); vm.send() }
         compose.waitUntil(5000) { vm.state.value.failure == CoachFailure.Offline }
-        compose.onNodeWithTag("coach-list").performScrollToIndex(0); capture("offline-light-reference")
+        compose.onNodeWithTag("coach-list").performScrollToIndex(0); capture("offline-$mode-reference")
         assertEquals("Read 20 pages", vm.state.value.name); assertNotNull(vm.state.value.response)
     }
 

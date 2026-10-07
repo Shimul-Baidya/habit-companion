@@ -267,7 +267,10 @@ class InsightWorkflowUiTest {
         compose.waitUntil(5000) { !progress.state.value.read.loading && !progress.state.value.read.error }
         assertEquals(before, progress.state.value.read.snapshot)
     }
-    @Test fun lightProgressReferenceWeekMonthAndStreakVisuals() {
+    @Test fun lightProgressReferenceWeekMonthAndStreakVisuals() { progressReference(false) }
+    @Test fun darkProgressReferenceWeekMonthAndStreakVisuals() { progressReference(true) }
+    private fun progressReference(dark: Boolean) {
+        val mode = if (dark) "dark" else "light"
         val id = create()
         val walk = create("Walk")
         val focus = create("Evening focus")
@@ -275,13 +278,13 @@ class InsightWorkflowUiTest {
             for (offset in 0L..4L) history.correct(walk, start.plusDays(offset), null)
             for (offset in 0L..6L) history.correct(focus, start.plusDays(offset), null)
         }
-        screen()
-        capture("progress-light-week-reference")
+        screen(dark = dark)
+        capture("progress-$mode-week-reference")
         compose.onNodeWithText("Month").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
-        capture("progress-light-month-reference")
+        capture("progress-$mode-month-reference")
         compose.onNodeWithTag("progress-scroll").performScrollToNode(hasTestTag("top-streak-$id"))
         compose.onNodeWithTag("top-streak-$id").assertHeightIsAtLeast(48.dp)
-        capture("progress-light-streaks-reference")
+        capture("progress-$mode-streaks-reference")
     }
     @Test fun darkSmallProgressLargeTextVisual() {
         val id = create("Read a chapter every evening"); screen(dark = true, small = true)
@@ -302,10 +305,13 @@ class InsightWorkflowUiTest {
         compose.onNodeWithTag("progress-scroll").performScrollToNode(hasTestTag("top-streak-$id"))
         compose.onNodeWithTag("top-streak-$id").assertIsDisplayed(); capture("progress-dark-small-streaks")
     }
-    @Test fun lightProfileReferenceAndScrollableDataControlsVisual() {
-        create(); screen(isProfile = true)
-        capture("profile-light-reference")
-        profileScroll("Clear all data"); capture("profile-light-data")
+    @Test fun lightProfileReferenceAndScrollableDataControlsVisual() { profileReference(false) }
+    @Test fun darkProfileReferenceAndScrollableDataControlsVisual() { profileReference(true) }
+    private fun profileReference(dark: Boolean) {
+        val mode = if (dark) "dark" else "light"
+        create(); screen(isProfile = true, dark = dark)
+        capture("profile-$mode-reference")
+        profileScroll("Clear all data"); capture("profile-$mode-data")
         compose.onNodeWithText("Restore data").assertIsNotEnabled()
         compose.onNodeWithText("Export data").performClick()
         compose.onNodeWithText("Saves a versioned JSON file", substring = true).assertIsDisplayed(); back()

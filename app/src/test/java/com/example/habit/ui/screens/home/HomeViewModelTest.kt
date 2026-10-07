@@ -243,4 +243,20 @@ class HomeViewModelTest {
         prefs.value = prefs.value.copy(coachEnabled = true); runCurrent(); assertTrue(vm.state.value.coachEnabled)
     }
 
+    @Test fun archivedOnlyCollectionKeepsHistoryForProgressAndDeletionBecomesGenuinelyEmpty() = runTest(dispatcher) {
+        val archived = record().copy(habit = record().habit.copy(
+            archivedAt = monday.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(),
+            archivedEpochDay = monday.plusDays(1).toEpochDay()),
+            completions = listOf(CompletionEntity(1, monday.toEpochDay(), completedAt = 1)))
+        val source = Source().apply { records.value = listOf(archived) }
+        val vm = model(source, Dates(monday.plusDays(2))); runCurrent()
+        assertTrue(vm.state.value.isEmpty); assertTrue(vm.state.value.hasHistory)
+        assertTrue(vm.state.value.allHabits.isEmpty())
+        assertEquals(1L, vm.state.value.snapshot!!.lifetime.completed)
+        assertEquals(1, vm.state.value.bestStreak)
+        source.records.value = emptyList(); runCurrent()
+        assertTrue(vm.state.value.isEmpty); assertFalse(vm.state.value.hasHistory)
+        assertEquals(CompletionTotals(), vm.state.value.snapshot!!.lifetime)
+    }
+
 }

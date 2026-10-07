@@ -15,7 +15,7 @@
     <string name="onboarding_body_1">Habit Companion makes daily tracking simple. Tap the ring for binary habits, or enter an amount for quantity habits.</string>
 
     <string name="onboarding_title_2">Watch the chain grow</string>
-    <string name="onboarding_body_2">Every tap extends a streak. The longer the chain gets, the more it is worth protecting, and the app keeps it in front of you.</string>
+    <string name="onboarding_body_2">Completed scheduled occurrences extend a streak. Quantity habits count when the target is reached; Weekly habits count required quota completions. Keep the chain in view.</string>
 
     <string name="onboarding_title_3">A Coach that reads the pattern</string>
     <string name="onboarding_body_3">The Coach uses a limited pattern summary to suggest a plan. Habits are stored on this device; using the Coach sends the permitted context and your questions to an AI service.</string>
@@ -28,11 +28,15 @@
 
     <!-- SCR-03 Home, empty -->
     <string name="empty_title">No habits yet</string>
+    <string name="empty_active_title">No active habits</string>
+    <string name="empty_active_body">Your saved habits and history are kept. Add a habit when you’re ready.</string>
+    <string name="empty_active_coach_body">Let the Coach help you plan a new habit.</string>
     <string name="empty_body">Start with one. A habit you could do on your worst day is the one that survives.</string>
     <string name="empty_add_first">Add your first habit</string>
     <string name="empty_coach_title">Not sure where to start?</string>
     <string name="empty_coach_body">Let the Coach size your first habit.</string>
     <string name="empty_tab_disabled">Add a habit first — there is nothing to show here yet.</string>
+    <string name="coach_tab_requires_active">Add an active habit to use this Coach tab. You can plan a new habit from Home.</string>
 
     <!-- SCR-04 Home, today -->
     <string name="home_section_today">Today</string>
@@ -41,7 +45,10 @@
     <string name="home_needs_attention">Needs attention</string>
     <string name="home_add_habit">Add habit</string>
     <string name="home_toggle_habit">Mark %1$s done for today</string>
-    <string name="home_today_ring">%1$d of %2$d habits done today</string>
+    <plurals name="home_today_ring">
+        <item quantity="one">%1$d of %2$d habit done today</item>
+        <item quantity="other">%1$d of %2$d habits done today</item>
+    </plurals>
     <string name="home_all_done">All done for today</string>
     <string name="home_db_error">Could not open your habits. Tap to retry.</string>
     <string name="home_retry">Retry</string>
@@ -52,7 +59,6 @@
     </plurals>
 
     <string name="frequency_daily">Every day</string>
-    <string name="frequency_days_a_week">%1$d days a week</string>
 
     <!-- Bottom nav, C-09 -->
     <string name="tab_home">Home</string>
@@ -60,11 +66,7 @@
     <string name="tab_coach">Coach</string>
     <string name="tab_profile">Profile</string>
 
-    <!-- Destinations not built yet -->
-    <string name="not_built_title">Coming next</string>
-    <string name="not_built_body">%1$s is specified in the deck and is not built yet.</string>
-
-    <!-- SCR-05 stub -->
+    <!-- SCR-05 shared New/Edit form -->
     <string name="new_habit_title">New habit</string>
     <string name="new_habit_name_label">Name</string>
     <string name="new_habit_create">Create habit</string>
@@ -74,8 +76,14 @@
     <string name="home_not_due_habit">%1$s is not due today</string>
     <string name="home_unmark_habit">Mark %1$s not done for today</string>
     <string name="home_quantity_habit">Enter or change today’s amount for %1$s</string>
-    <string name="frequency_weekly_quota">%1$d completions per week</string>
-    <string name="frequency_custom_days">%1$d selected days per week</string>
+    <plurals name="frequency_weekly_quota">
+        <item quantity="one">%1$d completion per week</item>
+        <item quantity="other">%1$d completions per week</item>
+    </plurals>
+    <plurals name="frequency_custom_days">
+        <item quantity="one">%1$d selected day per week</item>
+        <item quantity="other">%1$d selected days per week</item>
+    </plurals>
     <plurals name="streak_occurrences">
         <item quantity="one">%d completion streak</item>
         <item quantity="other">%d completion streak</item>
@@ -112,6 +120,7 @@
     <string name="form_history_help">Past records keep their original settings. Tracking and targets change tomorrow. Schedules change tomorrow, or next Monday when changing to or from Weekly.</string>
     <string name="form_coach_title">Not sure how to make this stick?</string>
     <string name="form_coach_body">Get a starting plan with Google Gemini. Sends draft context; free-tier data may be reviewed.</string>
+    <string name="form_existing_coach_body">Get a plan with Google Gemini. Sends this habit’s measured summary and your question; free-tier data may be reviewed.</string>
     <string name="form_coach_not_connected">Coach is not connected yet. Your draft stays here.</string>
     <string name="form_coach_disabled">Coach is disabled in settings. Your draft stays here.</string>
     <string name="form_save">Save changes</string>
@@ -147,9 +156,6 @@
     <string name="quantity_failed">Could not save. Your amount is kept; try again.</string>
     <string name="quantity_stale">This day or habit changed. Close and reopen the amount entry.</string>
     <string name="onboarding_save_error">Could not finish setup. Please try again.</string>
-    <string name="detail_pending">Habit detail is scheduled for the next implementation chunk.</string>
-    <string name="detail_title">Habit detail</string>
-    <string name="navigation_back">Back</string>
     <string name="coach_disabled_title">Coach is disabled</string>
     <string name="coach_disabled_body">Enable Coach suggestions in Profile to use the Coach. Your local habits and history remain available.</string>
     <string name="onboarding_demo_title">Read 20 pages</string>

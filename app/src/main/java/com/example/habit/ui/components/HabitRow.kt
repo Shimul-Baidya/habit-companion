@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.habit.R
 import com.example.habit.data.local.HabitEntity
@@ -130,8 +131,8 @@ fun HabitRow(
 @Composable
 private fun frequencyLabel(schedule: HabitSchedule): String = when (schedule) {
     HabitSchedule.Daily -> stringResource(R.string.frequency_daily)
-    is HabitSchedule.Weekly -> stringResource(R.string.frequency_weekly_quota, schedule.completions)
-    is HabitSchedule.Custom -> stringResource(R.string.frequency_custom_days, schedule.weekdays.size)
+    is HabitSchedule.Weekly -> pluralStringResource(R.plurals.frequency_weekly_quota, schedule.completions, schedule.completions)
+    is HabitSchedule.Custom -> pluralStringResource(R.plurals.frequency_custom_days, schedule.weekdays.size, schedule.weekdays.size)
 }
 
 @Preview(widthDp = 393, showBackground = true, backgroundColor = 0xFFF3F7F5)

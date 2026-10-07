@@ -30,7 +30,7 @@ object Routes {
     fun newHabit(planning: Boolean = false) = "new-habit?habitId=0&planning=$planning"
     fun editHabit(id: Long): String { require(id > 0); return "new-habit?habitId=$id&planning=false" }
 
-    /** SCR-12 / SCR-13, SCR-09, SCR-15 — nav roots, not built in this phase. */
+    /** SCR-12 / SCR-13, SCR-09, SCR-15 — retained tab roots. */
     const val PROGRESS = "progress"
     const val COACH = "coach"
     const val COACH_HABIT = "coach/{habitId}"

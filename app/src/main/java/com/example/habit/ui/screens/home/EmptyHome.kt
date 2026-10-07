@@ -57,6 +57,7 @@ fun EmptyHome(
     onOpenCoach: () -> Unit,
     modifier: Modifier = Modifier,
     coachEnabled: Boolean = true,
+    hasHistory: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -70,11 +71,11 @@ fun EmptyHome(
 
         Spacer(Modifier.height(Spacing.xxxl))
 
-        EmptyCard(onAddHabit = onAddHabit)
+        EmptyCard(onAddHabit = onAddHabit, hasHistory = hasHistory)
 
         Spacer(Modifier.height(Spacing.lg))
 
-        if (coachEnabled) CoachShortcut(onOpenCoach = onOpenCoach)
+        if (coachEnabled) CoachShortcut(onOpenCoach = onOpenCoach, hasHistory = hasHistory)
 
         Spacer(Modifier.height(Spacing.xxl))
     }
@@ -82,7 +83,7 @@ fun EmptyHome(
 
 /** Elements 3, 4 and 5 — 20dp radius and 32dp inner padding are specified on this card. */
 @Composable
-private fun EmptyCard(onAddHabit: () -> Unit) {
+private fun EmptyCard(onAddHabit: () -> Unit, hasHistory: Boolean) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = HabitTheme.colors.surfaceCard),
@@ -116,7 +117,7 @@ private fun EmptyCard(onAddHabit: () -> Unit) {
             Spacer(Modifier.height(Spacing.xxl))
 
             Text(
-                text = stringResource(R.string.empty_title),
+                text = stringResource(if (hasHistory) R.string.empty_active_title else R.string.empty_title),
                 style = HabitTheme.type.titleLg,
                 color = HabitTheme.colors.onSurface,
                 textAlign = TextAlign.Center,
@@ -125,7 +126,7 @@ private fun EmptyCard(onAddHabit: () -> Unit) {
             Spacer(Modifier.height(Spacing.sm))
 
             Text(
-                text = stringResource(R.string.empty_body),
+                text = stringResource(if (hasHistory) R.string.empty_active_body else R.string.empty_body),
                 style = HabitTheme.type.caption,
                 color = HabitTheme.colors.onSurfaceMuted,
                 textAlign = TextAlign.Center,
@@ -135,7 +136,7 @@ private fun EmptyCard(onAddHabit: () -> Unit) {
 
             // 5 — C-08, the one filled button on the screen.
             PrimaryButton(
-                text = stringResource(R.string.empty_add_first),
+                text = stringResource(if (hasHistory) R.string.home_add_habit else R.string.empty_add_first),
                 onClick = onAddHabit,
             )
         }
@@ -144,7 +145,7 @@ private fun EmptyCard(onAddHabit: () -> Unit) {
 
 /** 6 — 88dp tall, 16dp radius, 1dp outline, 44dp leading circle. Opens SCR-06. */
 @Composable
-private fun CoachShortcut(onOpenCoach: () -> Unit) {
+private fun CoachShortcut(onOpenCoach: () -> Unit, hasHistory: Boolean) {
     val description = stringResource(R.string.empty_coach_title)
     Card(
         shape = Radius.card,
@@ -186,7 +187,7 @@ private fun CoachShortcut(onOpenCoach: () -> Unit) {
                     color = HabitTheme.colors.onSurface,
                 )
                 Text(
-                    text = stringResource(R.string.empty_coach_body),
+                    text = stringResource(if (hasHistory) R.string.empty_active_coach_body else R.string.empty_coach_body),
                     style = HabitTheme.type.caption,
                     color = HabitTheme.colors.onSurfaceMuted,
                 )
